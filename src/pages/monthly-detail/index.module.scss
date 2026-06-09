@@ -1,0 +1,340 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding 120rpx;
+}
+
+.monthSelector {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.monthNav {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: $color-bg-page;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-lg;
+  color: $color-primary;
+  transition: all $transition-fast;
+}
+
+.monthNav:active {
+  background: $color-primary-bg;
+  transform: scale(0.95);
+}
+
+.monthDisplay {
+  text-align: center;
+}
+
+.monthText {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+}
+
+.monthSub {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.summaryHeader {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 8rpx 32rpx rgba(46, 125, 50, 0.2);
+}
+
+.summaryTitle {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: $spacing-md;
+}
+
+.summaryMain {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: $spacing-xl;
+}
+
+.summaryAmount {
+  font-size: 64rpx;
+  font-weight: $font-weight-bold;
+  color: #fff;
+  margin-right: $spacing-xs;
+}
+
+.summaryUnit {
+  font-size: $font-size-md;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+}
+
+.summaryItem {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.summaryValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: #fff;
+  margin-bottom: 4rpx;
+}
+
+.summaryLabel {
+  font-size: $font-size-xs;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.feeBreakdown {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sectionTitle::before {
+  content: '';
+  display: inline-block;
+  width: 8rpx;
+  height: 32rpx;
+  background: $color-primary;
+  border-radius: $radius-xs;
+  margin-right: $spacing-sm;
+}
+
+.titleText {
+  display: flex;
+  align-items: center;
+}
+
+.exportBtn {
+  @include button-reset;
+  padding: 0 $spacing-md;
+  height: 56rpx;
+  background: linear-gradient(135deg, $color-amber 0%, $color-amber-light 100%);
+  border-radius: $radius-button;
+  color: #fff;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  box-shadow: 0 2rpx 8rpx rgba(237, 108, 2, 0.25);
+}
+
+.feeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md 0;
+  border-bottom: 2rpx solid $color-divider;
+}
+
+.feeRow:last-child {
+  border-bottom: none;
+}
+
+.feeLabel {
+  display: flex;
+  align-items: center;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.feeIcon {
+  font-size: $font-size-lg;
+  margin-right: $spacing-sm;
+}
+
+.feeValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.feeValuePositive {
+  color: $color-success;
+  font-weight: $font-weight-semibold;
+}
+
+.feeValueNegative {
+  color: $color-error;
+  font-weight: $font-weight-semibold;
+}
+
+.feeTotalRow {
+  padding: $spacing-md;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  margin-top: $spacing-md;
+}
+
+.detailTableCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  padding: $spacing-md;
+  background: $color-primary-bg;
+  border-bottom: 2rpx solid $color-border;
+}
+
+.tableHeaderCell {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.tableRow {
+  display: flex;
+  padding: $spacing-md;
+  border-bottom: 2rpx solid $color-divider;
+  transition: background $transition-fast;
+}
+
+.tableRow:last-child {
+  border-bottom: none;
+}
+
+.tableRow:active {
+  background: $color-bg-hover;
+}
+
+.tableCell {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.cellDate {
+  width: 120rpx;
+  flex-shrink: 0;
+}
+
+.cellNo {
+  width: 160rpx;
+  flex-shrink: 0;
+  font-family: monospace;
+}
+
+.cellRoute {
+  flex: 1;
+  @include text-ellipsis;
+}
+
+.cellWeight {
+  width: 100rpx;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.cellFee {
+  width: 100rpx;
+  flex-shrink: 0;
+  text-align: right;
+  color: $color-amber;
+  font-weight: $font-weight-semibold;
+}
+
+.cellStatus {
+  width: 70rpx;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 20rpx;
+  padding: 2rpx 0;
+}
+
+.statusPaid {
+  color: $color-success;
+  font-weight: $font-weight-medium;
+}
+
+.statusPending {
+  color: $color-warning;
+  font-weight: $font-weight-medium;
+}
+
+.emptyState {
+  padding: 80rpx $spacing-lg;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 100rpx;
+  margin-bottom: $spacing-md;
+}
+
+.emptyText {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  display: block;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.shareRow {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.shareBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 50, 0.3);
+}
+
+.secondaryBtn {
+  background: $color-bg-page;
+  color: $color-primary;
+}

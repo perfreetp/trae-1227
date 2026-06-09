@@ -1,0 +1,143 @@
+@use '@/styles/variables.scss' as *;
+
+.card {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: $shadow-card-hover;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.taskNoText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.route {
+  margin-bottom: $spacing-md;
+}
+
+.point {
+  display: flex;
+  align-items: flex-start;
+}
+
+.startDot {
+  width: 20rpx;
+  height: 20rpx;
+  background: $color-success;
+  border-radius: 50%;
+  margin-top: 8rpx;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+}
+
+.endDot {
+  width: 20rpx;
+  height: 20rpx;
+  background: $color-amber;
+  border-radius: 50%;
+  margin-top: 8rpx;
+  margin-right: $spacing-md;
+  flex-shrink: 0;
+}
+
+.line {
+  width: 2rpx;
+  height: 40rpx;
+  background: $color-border;
+  margin-left: 9rpx;
+}
+
+.addrWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.addrLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+}
+
+.addr {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  @include text-ellipsis;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md 0;
+  border-top: 1rpx solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
+  margin-bottom: $spacing-md;
+}
+
+.infoItem {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.infoLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+}
+
+.infoValue {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.fee {
+  font-size: $font-size-lg;
+  color: $color-amber;
+  font-weight: $font-weight-bold;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plate {
+  background: linear-gradient(135deg, $color-primary-bg 0%, #FFFFFF 100%);
+  border: 1rpx solid $color-border;
+  border-radius: $radius-sm;
+  padding: 6rpx 16rpx;
+}
+
+.plateText {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+  font-family: 'Courier New', monospace;
+}
+
+.time {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}

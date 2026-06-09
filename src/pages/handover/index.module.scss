@@ -1,0 +1,275 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding 120rpx;
+}
+
+.taskCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: 0 8rpx 32rpx rgba(46, 125, 50, 0.2);
+}
+
+.taskHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.taskNo {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.statusTag {
+  padding: 6rpx 16rpx;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  color: #fff;
+  font-weight: $font-weight-medium;
+}
+
+.taskRoute {
+  margin-bottom: $spacing-md;
+}
+
+.routeText {
+  font-size: $font-size-md;
+  color: #fff;
+  font-weight: $font-weight-medium;
+}
+
+.taskInfo {
+  display: flex;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.infoBlock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.infoLabel {
+  font-size: $font-size-xs;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 4rpx;
+}
+
+.infoValue {
+  font-size: $font-size-md;
+  color: #fff;
+  font-weight: $font-weight-semibold;
+}
+
+.infoValueFee {
+  font-size: $font-size-md;
+  color: #FFEB3B;
+  font-weight: $font-weight-bold;
+}
+
+.tabs {
+  display: flex;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: 6rpx;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.tab {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+}
+
+.tabActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+}
+
+.tabText {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.tabTextActive {
+  font-size: $font-size-xs;
+  color: #fff;
+  font-weight: $font-weight-semibold;
+}
+
+.contentCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+}
+
+.scanArea {
+  padding: $spacing-xl $spacing-lg;
+  display: flex;
+  justify-content: center;
+}
+
+.scanBox {
+  width: 360rpx;
+  height: 360rpx;
+  border: 4rpx dashed $color-primary;
+  border-radius: $radius-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: $color-primary-bg;
+}
+
+.scanIcon {
+  font-size: 100rpx;
+  margin-bottom: $spacing-md;
+}
+
+.scanHint {
+  font-size: $font-size-md;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-xs;
+}
+
+.scanDesc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.tips {
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin: $spacing-lg 0;
+}
+
+.tipsTitle {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.tipsItem {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+  display: block;
+}
+
+.scanBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-blue 0%, #42A5F5 100%);
+  border-radius: $radius-button;
+  box-shadow: 0 4rpx 12rpx rgba(25, 118, 210, 0.3);
+}
+
+.scanBtnText {
+  font-size: $font-size-md;
+  color: #fff;
+  font-weight: $font-weight-semibold;
+}
+
+.sectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 200rpx;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+  margin-bottom: $spacing-lg;
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
+}
+
+.photoItem {
+  position: relative;
+  width: 100%;
+  padding-top: 100%;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.photoImg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: $radius-md;
+}
+
+.photoAdd {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: $color-primary-bg;
+  border: 2rpx dashed $color-border;
+  border-radius: $radius-md;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.photoAddIcon {
+  font-size: 48rpx;
+  margin-bottom: $spacing-xs;
+}
+
+.photoAddText {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.submitBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 50, 0.3);
+}
+
+.submitBtnText {
+  font-size: $font-size-md;
+  color: #fff;
+  font-weight: $font-weight-semibold;
+}

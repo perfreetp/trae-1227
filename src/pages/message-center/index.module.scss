@@ -1,0 +1,134 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding: $spacing-md $page-padding 120rpx;
+}
+
+.tabs {
+  display: flex;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: 6rpx;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.tab {
+  flex: 1;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+}
+
+.tabActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+}
+
+.tabText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.tabTextActive {
+  color: $color-text-white;
+}
+
+.tabDot {
+  width: 12rpx;
+  height: 12rpx;
+  background: $color-error;
+  border-radius: 50%;
+  margin-left: 6rpx;
+}
+
+.messageItem {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.messageItemUnread {
+  border-left: 6rpx solid $color-primary;
+  background: linear-gradient(90deg, $color-primary-bg 0%, $color-bg-card 30%);
+}
+
+.messageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.messageTypeWrap {
+  display: flex;
+  align-items: center;
+}
+
+.messageTypeTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  margin-right: $spacing-sm;
+}
+
+.unreadDot {
+  width: 16rpx;
+  height: 16rpx;
+  background: $color-error;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: $spacing-sm;
+}
+
+.messageTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.messageTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  @include text-ellipsis;
+}
+
+.messageContent {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-loose;
+  @include text-ellipsis-multi(2);
+}
+
+.levelBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2rpx 8rpx;
+  border-radius: $radius-xs;
+  font-size: 20rpx;
+  margin-right: $spacing-xs;
+}
+
+.levelUrgent {
+  background: #FFEBEE;
+  color: $color-error;
+}
+
+.levelWarning {
+  background: #FFF3E0;
+  color: $color-warning;
+}

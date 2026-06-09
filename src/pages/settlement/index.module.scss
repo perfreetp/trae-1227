@@ -1,0 +1,433 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding 120rpx;
+}
+
+.summaryCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: 0 8rpx 32rpx rgba(46, 125, 50, 0.2);
+}
+
+.summaryTitle {
+  font-size: $font-size-sm;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: $spacing-sm;
+}
+
+.summaryMain {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: $spacing-lg;
+}
+
+.summaryAmount {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  color: #fff;
+  margin-right: $spacing-xs;
+}
+
+.summaryUnit {
+  font-size: $font-size-md;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.summaryStats {
+  display: flex;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.summaryStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.summaryStatValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: #fff;
+  margin-bottom: 4rpx;
+}
+
+.summaryStatLabel {
+  font-size: $font-size-xs;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.summaryStatDivider {
+  width: 2rpx;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 0 $spacing-sm;
+}
+
+.tabs {
+  display: flex;
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: 6rpx;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.tab {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-sm;
+  transition: all $transition-base;
+  position: relative;
+}
+
+.tabActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+}
+
+.tabText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.tabTextActive {
+  font-size: $font-size-sm;
+  color: #fff;
+  font-weight: $font-weight-semibold;
+}
+
+.tabBadge {
+  position: absolute;
+  top: 8rpx;
+  right: 16rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 8rpx;
+  background: $color-error;
+  color: #fff;
+  font-size: 20rpx;
+  border-radius: $radius-round;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.applyCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 2rpx solid $color-divider;
+}
+
+.cardNo {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.statusBadge {
+  padding: 6rpx 16rpx;
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.cardInfo {
+  margin-bottom: $spacing-md;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.infoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.infoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.feeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+}
+
+.feeLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.feeValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-amber;
+}
+
+.bonusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-xs;
+}
+
+.bonusText {
+  font-size: $font-size-xs;
+  color: $color-success;
+}
+
+.deductionText {
+  font-size: $font-size-xs;
+  color: $color-error;
+}
+
+.cardActions {
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.actionBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 50, 0.25);
+  font-weight: $font-weight-semibold;
+}
+
+.secondaryBtn {
+  background: $color-bg-page;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.emptyState {
+  padding: 80rpx $spacing-lg;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 100rpx;
+  margin-bottom: $spacing-md;
+}
+
+.emptyText {
+  font-size: $font-size-md;
+  color: $color-text-tertiary;
+  margin-bottom: $spacing-lg;
+  display: block;
+}
+
+.emptyBtn {
+  @include button-reset;
+  display: inline-flex;
+  padding: 0 $spacing-xl;
+  height: $button-height-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  color: #fff;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+
+.formCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+  display: flex;
+  align-items: center;
+}
+
+.sectionTitle::before {
+  content: '';
+  display: inline-block;
+  width: 8rpx;
+  height: 32rpx;
+  background: $color-primary;
+  border-radius: $radius-xs;
+  margin-right: $spacing-sm;
+}
+
+.formItem {
+  margin-bottom: $spacing-md;
+}
+
+.formLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.formInput {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.formTextarea {
+  width: 100%;
+  min-height: 160rpx;
+  padding: $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.formRow {
+  display: flex;
+  gap: $spacing-md;
+}
+
+.formRowItem {
+  flex: 1;
+}
+
+.previewBox {
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+  margin: $spacing-lg 0;
+  border: 2rpx solid $color-amber-light;
+}
+
+.previewTitle {
+  font-size: $font-size-sm;
+  color: $color-amber;
+  font-weight: $font-weight-semibold;
+  margin-bottom: $spacing-md;
+}
+
+.previewItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.previewLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.previewValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.previewTotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  margin-top: $spacing-md;
+  border-top: 2rpx dashed rgba(237, 108, 2, 0.3);
+}
+
+.previewTotalLabel {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.previewTotalValue {
+  font-size: $font-size-xl;
+  color: $color-amber;
+  font-weight: $font-weight-bold;
+}
+
+.submitBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+}
+
+.backBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-amber 0%, $color-amber-light 100%);
+  border-radius: $radius-button;
+  color: #fff;
+  font-size: $font-weight-semibold;
+  box-shadow: 0 4rpx 12rpx rgba(237, 108, 2, 0.3);
+}
+
+.taskSelect {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+}
+
+.taskSelectText {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+}
+
+.taskSelectArrow {
+  font-size: $font-size-lg;
+  color: $color-text-tertiary;
+}

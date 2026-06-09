@@ -1,0 +1,241 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding: $spacing-lg $page-padding 200rpx;
+}
+
+.statusCard {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-xl;
+  padding: $spacing-xl;
+  margin-bottom: $spacing-md;
+  color: $color-text-white;
+  box-shadow: 0 8rpx 32rpx rgba(46, 125, 50, 0.25);
+}
+
+.statusHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.taskNo {
+  font-size: $font-size-sm;
+  opacity: 0.9;
+}
+
+.statusTag {
+  padding: 8rpx 20rpx;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+}
+
+.statusTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-sm;
+}
+
+.statusDesc {
+  font-size: $font-size-sm;
+  opacity: 0.85;
+  line-height: $line-height-loose;
+}
+
+.infoCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.cardTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+  display: flex;
+  align-items: center;
+}
+
+.cardTitleIcon {
+  font-size: $font-size-xl;
+  margin-right: $spacing-sm;
+}
+
+.routeBlock {
+  margin-bottom: 0;
+}
+
+.routePoint {
+  display: flex;
+  align-items: flex-start;
+  padding-bottom: $spacing-md;
+  margin-bottom: $spacing-md;
+  border-bottom: 1rpx dashed $color-border;
+
+  &:last-child {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+.routeIcon {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: $spacing-md;
+  margin-top: 4rpx;
+  flex-shrink: 0;
+  font-size: 16rpx;
+  color: #fff;
+}
+
+.routeIconStart {
+  background: $color-success;
+}
+
+.routeIconEnd {
+  background: $color-amber;
+}
+
+.routeContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.routeLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+}
+
+.routeAddr {
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  line-height: $line-height-normal;
+}
+
+.infoRow {
+  display: flex;
+  padding: $spacing-md 0;
+  border-bottom: 1rpx solid $color-divider;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.infoLabel {
+  width: 180rpx;
+  flex-shrink: 0;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.infoValue {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.bottomBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: $color-bg-card;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc($spacing-md + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.08);
+  display: flex;
+  gap: $spacing-md;
+}
+
+.btnGhost {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  background: $color-bg-card;
+  border: 2rpx solid $color-border;
+  border-radius: $radius-button;
+}
+
+.btnGhostText {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.btnPrimary {
+  @include button-reset;
+  flex: 2;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 50, 0.3);
+}
+
+.btnPrimaryText {
+  font-size: $font-size-md;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.btnWarn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-lg;
+  background: linear-gradient(135deg, $color-warning 0%, $color-amber-light 100%);
+  border-radius: $radius-button;
+}
+
+.btnWarnText {
+  font-size: $font-size-md;
+  color: $color-text-white;
+  font-weight: $font-weight-semibold;
+}
+
+.feeCard {
+  background: linear-gradient(135deg, $color-amber 0%, $color-amber-light 100%);
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(237, 108, 2, 0.2);
+}
+
+.feeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-xs 0;
+}
+
+.feeLabel {
+  font-size: $font-size-sm;
+  opacity: 0.9;
+}
+
+.feeValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.feeTotal {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+}
