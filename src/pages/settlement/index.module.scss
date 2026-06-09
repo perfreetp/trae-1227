@@ -502,3 +502,102 @@
 .summaryDetailPaid {
   color: #A5D6A7;
 }
+
+.cardActions2 {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.actionBtnSmall {
+  @include button-reset;
+  flex: 1;
+  min-width: 180rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-button;
+  background: $color-bg-disable;
+  color: $color-text-secondary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.actionBtnReject {
+  background: #FFEBEE;
+  color: #F53F3F;
+}
+
+.actionBtnApprove {
+  background: linear-gradient(135deg, #165DFF 0%, #4080FF 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(22, 93, 255, 0.2);
+}
+
+.actionBtnPaid {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 50, 0.2);
+}
+
+.modalMask {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+}
+
+.modalWrap {
+  width: 100%;
+  max-height: 85vh;
+  background: $color-bg-card;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  padding: $spacing-lg;
+  border-bottom: 1rpx solid $color-border;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+}
+
+.modalClose {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-bg-disable;
+  color: $color-text-tertiary;
+  font-size: $font-size-md;
+}
+
+.modalBody {
+  padding: $spacing-lg;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modalFooter {
+  padding: $spacing-md $spacing-lg $spacing-lg;
+  border-top: 1rpx solid $color-border;
+  display: flex;
+  gap: $spacing-sm;
+}

@@ -41,11 +41,19 @@ const saveSettleFilter = (f: SettleSavedFilter) => {
   } catch (_) {}
 };
 
+const syncSettlementToGlobal = (updatedList: Settlement[]) => {
+  try {
+    mockSettlements.length = 0;
+    updatedList.forEach(s => mockSettlements.push(s));
+  } catch (_) {}
+};
+
 const SettlementPage: React.FC = () => {
   const router = useRouter();
   const taskIdFromRouter = router.params.taskId;
+  const settlementIdFromRouter = router.params.settlementId;
   const saved = loadSettleFilter();
-  const [activeTab, setActiveTab] = useState<TabType>(taskIdFromRouter ? 'apply' : 'list');
+  const [activeTab, setActiveTab] = useState<TabType>((taskIdFromRouter || settlementIdFromRouter) ? 'list' : 'list');
   const [filterStatus, setFilterStatus] = useState<SettlementStatus | 'all'>(saved?.filterStatus || 'all');
   const [filterMonth, setFilterMonth] = useState<string>(saved?.filterMonth || 'all');
   const [filterPlate, setFilterPlate] = useState<string>(saved?.filterPlate || '');
@@ -54,10 +62,27 @@ const SettlementPage: React.FC = () => {
   const [actualWeight, setActualWeight] = useState<string>('');
   const [unitPrice, setUnitPrice] = useState<string>('82');
   const [remarks, setRemarks] = useState<string>('');
+  const [detailSettlement, setDetailSettlement] = useState<Settlement | null>(null);
 
   useEffect(() => {
     saveSettleFilter({ filterStatus, filterMonth, filterPlate });
   }, [filterStatus, filterMonth, filterPlate]);
+
+  useEffect(() => {
+    if (settlementIdFromRouter) {
+      const found = settlements.find(s => s.id === settlementIdFromRouter);
+      if (found) {
+        setTimeout(() => setDetailSettlement(found), 300);
+        return;
+      }
+    }
+    if (taskIdFromRouter && !settlementIdFromRouter) {
+      const found = settlements.find(s => s.taskId === taskIdFromRouter || s.taskNo === mockTasks.find(t => t.id === taskIdFromRouter)?.taskNo);
+      if (found) {
+        setTimeout(() => setDetailSettlement(found), 300);
+      }
+    }
+  }, [settlementIdFromRouter, taskIdFromRouter, settlements]);
 
   usePullDownRefresh(() => {
     setTimeout(() => {
@@ -180,6 +205,74 @@ const SettlementPage: React.FC = () => {
     }
   };
 
+  const nowStr = () => new Date().toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+  }).replace(/\//g, '-');
+
+  const updateSettlement = (id: string, patch: Partial<Settlement>) => {
+    const updated = settlements.map(s => s.id === id ? { ...s, ...patch } : s);
+    setSettlements(updated);
+    syncSettlementToGlobal(updated);
+  };
+
+  const handleApprove = (item: Settlement) => {
+    Taro.showModal({
+      title: '审核通过',
+      content: `确认通过结算单 ${item.settlementNo}？\n金额：${formatFee(item.totalFee)}`,
+      success: (res) => {
+        if (res.confirm) {
+          updateSettlement(item.id, { status: 'approved', approveTime: nowStr() });
+          Taro.showToast({ title: '已通过审核', icon: 'success' });
+          if (detailSettlement?.id === item.id) {
+            setDetailSettlement(prev => prev ? { ...prev, status: 'approved' as SettlementStatus, approveTime: nowStr() } : prev);
+          }
+        }
+      }
+    });
+  };
+
+  const handleReject = (item: Settlement) => {
+    Taro.showModal({
+      title: '审核驳回',
+      content: `确认驳回结算单 ${item.settlementNo}？\n建议填写驳回原因（演示环境已自动添加）`,
+      success: (res) => {
+        if (res.confirm) {
+          updateSettlement(item.id, {
+            status: 'rejected',
+            approveTime: nowStr(),
+            deductionReason: '审核驳回：信息不完整，请补充过磅单照片后重新提交',
+            deductionFee: item.deductionFee || 0
+          });
+          Taro.showToast({ title: '已驳回', icon: 'none' });
+          if (detailSettlement?.id === item.id) {
+            setDetailSettlement(prev => prev ? {
+              ...prev,
+              status: 'rejected' as SettlementStatus,
+              approveTime: nowStr(),
+              deductionReason: '审核驳回：信息不完整，请补充过磅单照片后重新提交'
+            } : prev);
+          }
+        }
+      }
+    });
+  };
+
+  const handleMarkPaid = (item: Settlement) => {
+    Taro.showModal({
+      title: '标记已到账',
+      content: `确认 ${item.settlementNo} 到账？\n将标记为已支付状态并更新运单详情结算状态。`,
+      success: (res) => {
+        if (res.confirm) {
+          updateSettlement(item.id, { status: 'paid', payTime: nowStr() });
+          Taro.showToast({ title: '已标记到账', icon: 'success' });
+          if (detailSettlement?.id === item.id) {
+            setDetailSettlement(prev => prev ? { ...prev, status: 'paid' as SettlementStatus, payTime: nowStr() } : prev);
+          }
+        }
+      }
+    });
+  };
+
   const estimatedFee = useMemo(() => {
     const weight = parseFloat(actualWeight) || selectedTask?.estimatedWeight || 0;
     const price = parseFloat(unitPrice) || 0;
@@ -201,12 +294,7 @@ const SettlementPage: React.FC = () => {
   };
 
   const handleViewDetail = (item: Settlement) => {
-    const statusInfo = settlementStatusMap[item.status];
-    Taro.showModal({
-      title: '结算单详情',
-      content: `结算单号：${item.settlementNo}\n运单号：${item.taskNo}\n司机：${item.driverName}\n车牌：${item.plateNumber}\n预估重量：${formatWeight(item.estimatedWeight)}\n实际重量：${formatWeight(item.actualWeight)}\n单价：¥${item.unitPrice}/吨\n预估运费：${formatFee(item.estimatedFee)}\n实际运费：${formatFee(item.actualFee)}${item.bonusFee ? `\n奖励：+${formatFee(item.bonusFee)}` : ''}${item.deductionFee ? `\n扣款：-${formatFee(item.deductionFee)}\n扣款原因：${item.deductionReason || ''}` : ''}\n总计：${formatFee(item.totalFee)}\n状态：${statusInfo.text}\n申请时间：${item.applyTime}${item.approveTime ? `\n审核时间：${item.approveTime}` : ''}${item.payTime ? `\n支付时间：${item.payTime}` : ''}`,
-      showCancel: false
-    });
+    setDetailSettlement(item);
   };
 
   const handleSubmitApply = () => {
@@ -450,6 +538,33 @@ const SettlementPage: React.FC = () => {
                       💳 结算详情
                     </Button>
                   </View>
+                  {item.status === 'pending' && (
+                    <View className={styles.cardActions2}>
+                      <Button className={`${styles.actionBtnSmall} ${styles.actionBtnReject}`} onClick={() => handleReject(item)}>
+                        ✖️ 审核驳回
+                      </Button>
+                      <Button className={`${styles.actionBtnSmall} ${styles.actionBtnApprove}`} onClick={() => handleApprove(item)}>
+                        ✔️ 审核通过
+                      </Button>
+                    </View>
+                  )}
+                  {item.status === 'approved' && (
+                    <View className={styles.cardActions2}>
+                      <Button className={`${styles.actionBtnSmall} ${styles.actionBtnPaid}`} onClick={() => handleMarkPaid(item)}>
+                        💰 标记已到账
+                      </Button>
+                    </View>
+                  )}
+                  {item.status === 'rejected' && (
+                    <View className={styles.cardActions2}>
+                      <Button className={`${styles.actionBtnSmall} ${styles.actionBtnApprove}`} onClick={() => {
+                        updateSettlement(item.id, { status: 'pending', approveTime: undefined, deductionReason: undefined });
+                        Taro.showToast({ title: '已重新提交审核', icon: 'success' });
+                      }}>
+                        📝 重新提交审核
+                      </Button>
+                    </View>
+                  )}
                 </View>
               );
             })
@@ -536,6 +651,168 @@ const SettlementPage: React.FC = () => {
           </View>
         </>
       )}
+
+      {detailSettlement && (() => {
+        const s = detailSettlement;
+        const sInfo = settlementStatusMap[s.status];
+        return (
+          <View className={styles.modalMask} onClick={() => setDetailSettlement(null)}>
+            <View className={styles.modalWrap} onClick={e => e.stopPropagation && e.stopPropagation()}>
+              <View className={styles.modalHeader}>
+                <Text className={styles.modalTitle}>💳 {s.settlementNo}</Text>
+                <View className={styles.modalClose} onClick={() => setDetailSettlement(null)}>
+                  ✕
+                </View>
+              </View>
+              <View className={styles.modalBody}>
+                <View style={{
+                  display: 'inline-block',
+                  padding: '8rpx 20rpx',
+                  borderRadius: '16rpx',
+                  marginBottom: '24rpx',
+                  background: sInfo.bgColor,
+                  color: sInfo.color,
+                  fontWeight: 600,
+                  fontSize: '26rpx'
+                }}>
+                  {sInfo.text}
+                </View>
+
+                <View style={{ marginBottom: '16rpx' }}>
+                  <Text style={{ fontSize: '26rpx', color: '#86909C', marginBottom: '8rpx', display: 'block' }}>
+                    基础信息
+                  </Text>
+                  {[
+                    ['运单号', s.taskNo],
+                    ['司机', `${s.driverName} · ${s.plateNumber}`],
+                    ['预估重量', formatWeight(s.estimatedWeight)],
+                    ['实际重量', formatWeight(s.actualWeight)],
+                    ['单价', `¥${s.unitPrice}/吨`]
+                  ].map(([k, v]) => (
+                    <View key={k} style={{
+                      display: 'flex', justifyContent: 'space-between',
+                      padding: '14rpx 0', borderBottom: '1rpx solid #F2F3F5'
+                    }}>
+                      <Text style={{ fontSize: '28rpx', color: '#86909C' }}>{k}</Text>
+                      <Text style={{ fontSize: '28rpx', color: '#1D2129', fontWeight: 500 }}>{v}</Text>
+                    </View>
+                  ))}
+                </View>
+
+                <View style={{ marginBottom: '16rpx' }}>
+                  <Text style={{ fontSize: '26rpx', color: '#86909C', marginBottom: '8rpx', display: 'block' }}>
+                    费用明细
+                  </Text>
+                  {[
+                    ['预估运费', formatFee(s.estimatedFee)],
+                    ['实际运费', formatFee(s.actualFee)],
+                    s.bonusFee ? ['🎁 奖励金额', `+${formatFee(s.bonusFee)}`] : null,
+                    s.deductionFee ? [`⚠️ 扣款${s.deductionReason ? `（${s.deductionReason}）` : ''}`, `-${formatFee(s.deductionFee)}`] : null,
+                  ].filter(Boolean).map(([k, v]) => (
+                    <View key={k as string} style={{
+                      display: 'flex', justifyContent: 'space-between',
+                      padding: '14rpx 0', borderBottom: '1rpx solid #F2F3F5'
+                    }}>
+                      <Text style={{ fontSize: '28rpx', color: '#86909C' }}>{k}</Text>
+                      <Text style={{ fontSize: '28rpx', color: '#1D2129', fontWeight: 500 }}>{v}</Text>
+                    </View>
+                  ))}
+                  <View style={{
+                    display: 'flex', justifyContent: 'space-between',
+                    padding: '20rpx 0', marginTop: '8rpx'
+                  }}>
+                    <Text style={{ fontSize: '30rpx', color: '#1D2129', fontWeight: 700 }}>💵 结算合计</Text>
+                    <Text style={{ fontSize: '34rpx', color: '#2E7D32', fontWeight: 800 }}>{formatFee(s.totalFee)}</Text>
+                  </View>
+                </View>
+
+                <View>
+                  <Text style={{ fontSize: '26rpx', color: '#86909C', marginBottom: '8rpx', display: 'block' }}>
+                    处理时间
+                  </Text>
+                  {[
+                    ['申请时间', s.applyTime],
+                    s.approveTime ? ['审核时间', s.approveTime] : null,
+                    s.payTime ? ['到账时间', s.payTime] : null,
+                  ].filter(Boolean).map(([k, v]) => (
+                    <View key={k as string} style={{
+                      display: 'flex', justifyContent: 'space-between',
+                      padding: '14rpx 0', borderBottom: '1rpx solid #F2F3F5'
+                    }}>
+                      <Text style={{ fontSize: '28rpx', color: '#86909C' }}>{k}</Text>
+                      <Text style={{ fontSize: '28rpx', color: '#1D2129' }}>{v}</Text>
+                    </View>
+                  ))}
+                  {s.remarks && (
+                    <View style={{ padding: '14rpx 0' }}>
+                      <Text style={{ fontSize: '28rpx', color: '#86909C', display: 'block', marginBottom: '8rpx' }}>备注</Text>
+                      <Text style={{ fontSize: '28rpx', color: '#4E5969' }}>{s.remarks}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+              <View className={styles.modalFooter}>
+                <Button
+                  className={styles.actionBtn}
+                  style={{ flex: 1, height: '80rpx', background: '#F2F3F5', color: '#4E5969' }}
+                  onClick={() => handleGoTaskDetail(s)}
+                >
+                  📦 查看运单
+                </Button>
+                {s.status === 'pending' && (
+                  <>
+                    <Button
+                      className={`${styles.actionBtnSmall} ${styles.actionBtnReject}`}
+                      style={{ flex: 1, height: '80rpx', fontSize: '28rpx' }}
+                      onClick={() => handleReject(s)}
+                    >
+                      ✖️ 驳回
+                    </Button>
+                    <Button
+                      className={`${styles.actionBtnSmall} ${styles.actionBtnApprove}`}
+                      style={{ flex: 1, height: '80rpx', fontSize: '28rpx' }}
+                      onClick={() => handleApprove(s)}
+                    >
+                      ✔️ 通过
+                    </Button>
+                  </>
+                )}
+                {s.status === 'approved' && (
+                  <Button
+                    className={`${styles.actionBtnSmall} ${styles.actionBtnPaid}`}
+                    style={{ flex: 1, height: '80rpx', fontSize: '28rpx' }}
+                    onClick={() => handleMarkPaid(s)}
+                  >
+                    💰 标记已到账
+                  </Button>
+                )}
+                {s.status === 'rejected' && (
+                  <Button
+                    className={`${styles.actionBtnSmall} ${styles.actionBtnApprove}`}
+                    style={{ flex: 1, height: '80rpx', fontSize: '28rpx' }}
+                    onClick={() => {
+                      updateSettlement(s.id, { status: 'pending', approveTime: undefined, deductionReason: undefined });
+                      Taro.showToast({ title: '已重新提交审核', icon: 'success' });
+                      setDetailSettlement(prev => prev ? { ...prev, status: 'pending' as SettlementStatus, approveTime: undefined, deductionReason: undefined } : prev);
+                    }}
+                  >
+                    📝 重新提交
+                  </Button>
+                )}
+                {(s.status === 'paid') && (
+                  <Button
+                    className={styles.actionBtn}
+                    style={{ flex: 1, height: '80rpx' }}
+                    onClick={() => setDetailSettlement(null)}
+                  >
+                    关闭
+                  </Button>
+                )}
+              </View>
+            </View>
+          </View>
+        );
+      })()}
     </View>
   );
 };

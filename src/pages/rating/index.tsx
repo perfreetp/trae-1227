@@ -188,13 +188,30 @@ const RatingPage: React.FC = () => {
     }, 1000);
   };
 
-  const handleViewTask = (taskNo: string) => {
+  const handleViewTask = (taskNo: string, history?: any) => {
     const task = mockTasks.find(t => t.taskNo === taskNo);
     if (task) {
       Taro.navigateTo({ url: `/pages/task-detail/index?id=${task.id}` });
-    } else {
-      Taro.showToast({ title: '运单详情暂不可用', icon: 'none' });
+      return;
     }
+    try {
+      Taro.setStorageSync('fallback_detail_summary_v1', {
+        source: 'rating',
+        sourceName: '评价记录',
+        taskNo,
+        date: history?.createTime || new Date().toLocaleDateString().replace(/\//g, '-'),
+        status: '已完成',
+        ratingStars: history?.stars,
+        ratingContent: history?.content,
+        partnerName: history?.partnerName,
+        partnerRole: history?.partnerRole,
+        route: '详情摘要',
+        plateNumber: '川A·',
+        weight: 0,
+        fee: 0
+      });
+    } catch (_) {}
+    Taro.navigateTo({ url: `/pages/task-detail/index?taskNo=${taskNo}` });
   };
 
   const filteredHistories = useMemo(() => {
@@ -492,7 +509,7 @@ const RatingPage: React.FC = () => {
                   </View>
                 )}
 
-                <Text className={styles.historyTask} onClick={() => handleViewTask(h.taskNo)}>
+                <Text className={styles.historyTask} onClick={() => handleViewTask(h.taskNo, h)}>
                   📦 {h.taskNo} · {h.createTime} → 查看运单
                 </Text>
               </View>

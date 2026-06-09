@@ -19,6 +19,23 @@ interface OperationTrail {
   detail?: string;
 }
 
+interface FallbackSummary {
+  source: 'monthly-detail' | 'rating' | string;
+  sourceName: string;
+  taskNo: string;
+  date?: string;
+  route?: string;
+  plateNumber?: string;
+  weight?: number;
+  fee?: number;
+  status?: string;
+  month?: string;
+  ratingStars?: number;
+  ratingContent?: string;
+  partnerName?: string;
+  partnerRole?: string;
+}
+
 const saveRecentView = (taskId: string, taskNo: string, taskTitle: string) => {
   try {
     const raw = Taro.getStorageSync(RECENT_VIEW_KEY);
@@ -37,22 +54,75 @@ const saveRecentView = (taskId: string, taskNo: string, taskTitle: string) => {
   } catch (_) {}
 };
 
+const loadFallbackSummary = (): FallbackSummary | null => {
+  try {
+    const raw = Taro.getStorageSync('fallback_detail_summary_v1');
+    if (raw && typeof raw === 'object') return raw;
+  } catch (_) {}
+  return null;
+};
+
 const TaskDetailPage: React.FC = () => {
   const router = useRouter();
   const paramId = router.params.id;
   const paramTaskNo = router.params.taskNo;
 
-  const task = useMemo<Task | null>(() => {
-    if (paramId) {
-      const found = mockTasks.find(t => t.id === paramId);
-      if (found) return found;
+  const lookupResult = useMemo<{
+    task: Task | null;
+    isSummary: boolean;
+    summary: FallbackSummary | null;
+  }>(() => {
+    let found: Task | null = null;
+    if (paramId) found = mockTasks.find(t => t.id === paramId) || null;
+    if (!found && paramTaskNo) found = mockTasks.find(t => t.taskNo === paramTaskNo) || null;
+    if (found) return { task: found, isSummary: false, summary: null };
+    const sum = loadFallbackSummary();
+    if (sum) {
+      const routeParts = (sum.route || '').split('→');
+      const pickup = routeParts[0] || '装货点';
+      const delivery = routeParts[1] || '收货点';
+      const virtualTask: Task = {
+        id: `fallback-${sum.taskNo}`,
+        taskNo: sum.taskNo,
+        status: 'completed',
+        publishTime: sum.date || '2026-06-01 09:00',
+        pickupAddress: pickup,
+        deliveryAddress: delivery,
+        estimatedWeight: (sum.weight || 0) * 1000,
+        actualWeight: (sum.weight || 0) * 1000,
+        unitPrice: 82,
+        estimatedFee: sum.fee || 0,
+        actualFee: sum.fee || 0,
+        bundleCount: 0,
+        plateNumber: sum.plateNumber || '川A·',
+        farmerName: '竹农',
+        farmerPhone: '138****0000',
+        pickupLatitude: 0,
+        pickupLongitude: 0,
+        deliveryLatitude: 0,
+        deliveryLongitude: 0,
+        heightLimit: 4.2,
+        widthLimit: 2.5,
+        remarks: sum.status ? `运输状态：${sum.status}` : '',
+        completeTime: sum.date || undefined,
+        bambooPhotos: [],
+        weightReceiptPhoto: undefined,
+        acceptTime: undefined,
+        loadingTime: undefined,
+        departureTime: undefined,
+        arrivalTime: undefined,
+        driverName: undefined,
+        driverPhone: undefined,
+        exceptionReport: undefined,
+        rating: sum.ratingStars,
+        ratingComment: sum.ratingContent
+      };
+      return { task: virtualTask, isSummary: true, summary: sum };
     }
-    if (paramTaskNo) {
-      const found = mockTasks.find(t => t.taskNo === paramTaskNo);
-      if (found) return found;
-    }
-    return mockTasks[0] || null;
+    return { task: null, isSummary: false, summary: null };
   }, [paramId, paramTaskNo]);
+
+  const { task, isSummary, summary } = lookupResult;
 
   useEffect(() => {
     if (task) {
@@ -75,7 +145,9 @@ const TaskDetailPage: React.FC = () => {
     );
   }
 
-  const statusConfig = statusMap[task.status];
+  const statusConfig = isSummary
+    ? { text: summary?.status || '已完成', color: '#2E7D32', bgColor: '#E8FFEA' }
+    : statusMap[task.status];
 
   const linkedSettlement = useMemo<Settlement | undefined>(() => {
     return mockSettlements.find(
@@ -342,6 +414,35 @@ const TaskDetailPage: React.FC = () => {
 
   return (
     <View className={styles.page}>
+      {isSummary && summary && (
+        <View style={{
+          marginBottom: '24rpx',
+          padding: '20rpx 24rpx',
+          background: '#FFF8E1',
+          borderRadius: '16rpx',
+          border: '2rpx dashed #F9A825',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16rpx'
+        }}>
+          <Text style={{ fontSize: '32rpx', flexShrink: 0 }}>📋</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{
+              fontSize: '26rpx',
+              color: '#F57C00',
+              fontWeight: 600,
+              display: 'block',
+              marginBottom: '4rpx'
+            }}>
+              这是从「{summary.sourceName}」查看的运单摘要
+            </Text>
+            <Text style={{ fontSize: '22rpx', color: '#B26A00', lineHeight: 1.5 }}>
+              已按明细数据合成可阅读详情，如需完整运单请在任务大厅或历史运单中查看
+            </Text>
+          </View>
+        </View>
+      )}
+
       <View className={styles.statusCard}>
         <View className={styles.statusHeader}>
           <Text className={styles.taskNo}>运单号：{task.taskNo}</Text>
@@ -407,86 +508,118 @@ const TaskDetailPage: React.FC = () => {
         </View>
       )}
 
-      <View className={styles.timelineCard}>
-        <Text className={styles.cardTitle}>
-          <Text className={styles.cardTitleIcon}>⏱️</Text>
-          运输进度
-        </Text>
-        <View className={styles.timelineList}>
-          {timelineSteps.map(step => {
-            const stepStatus = getStepStatus(step.key);
-            return (
-              <View
-                key={step.key}
-                className={`${styles.timelineItem} ${
-                  stepStatus === 'active' ? styles.timelineItemActive :
-                  stepStatus === 'done' ? styles.timelineItemDone : ''
-                }`}
-              >
-                <View className={styles.timelineLine} />
-                <View className={styles.timelineDot}>
-                  <Text>{step.icon}</Text>
-                </View>
-                <View className={styles.timelineContent}>
-                  <Text className={styles.timelineTitle}>{step.label}</Text>
-                  <Text className={styles.timelineTime}>
-                    {step.time || (stepStatus === 'active' ? '进行中...' : '待开始')}
-                  </Text>
-                </View>
+      {isSummary ? (
+        <View className={styles.timelineCard}>
+          <Text className={styles.cardTitle}>
+            <Text className={styles.cardTitleIcon}>📋</Text>
+            运单摘要 · {summary?.month || '明细'}
+          </Text>
+          <View style={{ padding: '8rpx 0' }}>
+            {[
+              ['运输日期', task.completeTime || task.publishTime],
+              ['运输路线', summary?.route || `${task.pickupAddress.slice(0, 10)}→${task.deliveryAddress.slice(0, 10)}`],
+              summary?.partnerName ? ['合作方', `${summary.partnerName}${summary.partnerRole ? `（${summary.partnerRole === 'farmer' ? '竹农' : '收购点'}）` : ''}`] : null,
+              summary?.ratingStars ? ['评价星级', '★'.repeat(summary.ratingStars) + '☆'.repeat(5 - summary.ratingStars)] : null,
+              summary?.ratingContent ? ['评价内容', summary.ratingContent] : null,
+              summary?.status ? ['运输状态', summary.status] : null,
+            ].filter(Boolean).map(([k, v]) => (
+              <View key={k as string} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+                padding: '18rpx 0', borderBottom: '1rpx solid #F2F3F5', gap: '24rpx'
+              }}>
+                <Text style={{ fontSize: '26rpx', color: '#86909C', flexShrink: 0 }}>{k}</Text>
+                <Text style={{
+                  fontSize: '26rpx', color: '#1D2129', fontWeight: 500,
+                  textAlign: 'right', lineHeight: 1.5
+                }}>{v}</Text>
               </View>
-            );
-          })}
+            ))}
+          </View>
         </View>
-      </View>
-
-      <View className={styles.timelineCard}>
-        <Text className={styles.cardTitle}>
-          <Text className={styles.cardTitleIcon}>📜</Text>
-          操作轨迹
-        </Text>
-        <View className={styles.timelineList}>
-          {operationTrail.map((trail, idx) => (
-            <View
-              key={trail.key}
-              className={`${styles.timelineItem} ${
-                idx === operationTrail.length - 1
-                  ? styles.timelineItemActive
-                  : styles.timelineItemDone
-              }`}
-            >
-              <View className={styles.timelineLine} />
-              <View className={styles.timelineDot}>
-                <Text>{trail.icon}</Text>
-              </View>
-              <View className={styles.timelineContent}>
-                <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Text className={styles.timelineTitle}>{trail.title}</Text>
-                  <Text style={{
-                    fontSize: '22rpx',
-                    color: idx === operationTrail.length - 1 ? '#2E7D32' : '#4E5969',
-                    fontWeight: 600,
-                    flexShrink: 0,
-                    marginLeft: '16rpx'
-                  }}>
-                    {trail.result}
-                  </Text>
-                </View>
-                <Text className={styles.timelineTime}>{trail.time}</Text>
-                {trail.detail && (
-                  <Text style={{
-                    fontSize: '24rpx',
-                    color: '#86909C',
-                    marginTop: '8rpx',
-                    lineHeight: 1.5
-                  }}>
-                    {trail.detail}
-                  </Text>
-                )}
-              </View>
+      ) : (
+        <>
+          <View className={styles.timelineCard}>
+            <Text className={styles.cardTitle}>
+              <Text className={styles.cardTitleIcon}>⏱️</Text>
+              运输进度
+            </Text>
+            <View className={styles.timelineList}>
+              {timelineSteps.map(step => {
+                const stepStatus = getStepStatus(step.key);
+                return (
+                  <View
+                    key={step.key}
+                    className={`${styles.timelineItem} ${
+                      stepStatus === 'active' ? styles.timelineItemActive :
+                      stepStatus === 'done' ? styles.timelineItemDone : ''
+                    }`}
+                  >
+                    <View className={styles.timelineLine} />
+                    <View className={styles.timelineDot}>
+                      <Text>{step.icon}</Text>
+                    </View>
+                    <View className={styles.timelineContent}>
+                      <Text className={styles.timelineTitle}>{step.label}</Text>
+                      <Text className={styles.timelineTime}>
+                        {step.time || (stepStatus === 'active' ? '进行中...' : '待开始')}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
-          ))}
-        </View>
-      </View>
+          </View>
+
+          <View className={styles.timelineCard}>
+            <Text className={styles.cardTitle}>
+              <Text className={styles.cardTitleIcon}>📜</Text>
+              操作轨迹
+            </Text>
+            <View className={styles.timelineList}>
+              {operationTrail.map((trail, idx) => (
+                <View
+                  key={trail.key}
+                  className={`${styles.timelineItem} ${
+                    idx === operationTrail.length - 1
+                      ? styles.timelineItemActive
+                      : styles.timelineItemDone
+                  }`}
+                >
+                  <View className={styles.timelineLine} />
+                  <View className={styles.timelineDot}>
+                    <Text>{trail.icon}</Text>
+                  </View>
+                  <View className={styles.timelineContent}>
+                    <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Text className={styles.timelineTitle}>{trail.title}</Text>
+                      <Text style={{
+                        fontSize: '22rpx',
+                        color: idx === operationTrail.length - 1 ? '#2E7D32' : '#4E5969',
+                        fontWeight: 600,
+                        flexShrink: 0,
+                        marginLeft: '16rpx'
+                      }}>
+                        {trail.result}
+                      </Text>
+                    </View>
+                    <Text className={styles.timelineTime}>{trail.time}</Text>
+                    {trail.detail && (
+                      <Text style={{
+                        fontSize: '24rpx',
+                        color: '#86909C',
+                        marginTop: '8rpx',
+                        lineHeight: 1.5
+                      }}>
+                        {trail.detail}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        </>
+      )}
 
       <View className={styles.feeCard}>
         <View className={styles.feeRow}>

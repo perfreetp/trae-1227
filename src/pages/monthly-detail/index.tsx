@@ -116,6 +116,20 @@ const MonthlyDetailPage: React.FC = () => {
   };
 
   const handleRowClick = (item: MonthlyDetailItem) => {
+    try {
+      Taro.setStorageSync('fallback_detail_summary_v1', {
+        source: 'monthly-detail',
+        sourceName: '月度明细',
+        taskNo: item.taskNo,
+        date: item.date,
+        route: item.route,
+        plateNumber: item.plateNumber,
+        weight: item.weight,
+        fee: item.fee,
+        status: item.status,
+        month: currentMonth
+      });
+    } catch (_) {}
     Taro.navigateTo({ url: `/pages/task-detail/index?taskNo=${item.taskNo}` });
   };
 
