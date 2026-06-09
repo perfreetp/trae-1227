@@ -429,3 +429,56 @@
   color: $color-text-tertiary;
   display: block;
 }
+
+.filterBar {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.filterRow {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filterLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-right: $spacing-xs;
+  flex-shrink: 0;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 10rpx 22rpx;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+}
+
+.filterChipActive {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: #fff;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 50, 0.25);
+}
+
+.filterChipReset {
+  background: transparent;
+  border: 2rpx dashed $color-border;
+  color: $color-text-tertiary;
+  box-shadow: none;
+}
+
+.historyTask {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  text-decoration: underline;
+  text-underline-offset: 4rpx;
+}

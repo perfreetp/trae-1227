@@ -239,3 +239,113 @@
   font-size: $font-size-xxl;
   font-weight: $font-weight-bold;
 }
+
+.timelineCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.timelineList {
+  position: relative;
+  padding-left: 8rpx;
+}
+
+.timelineItem {
+  position: relative;
+  padding-left: 64rpx;
+  padding-bottom: $spacing-lg;
+
+  &:last-child {
+    padding-bottom: 0;
+
+    .timelineLine {
+      display: none;
+    }
+  }
+}
+
+.timelineLine {
+  position: absolute;
+  left: 18rpx;
+  top: 44rpx;
+  bottom: -8rpx;
+  width: 2rpx;
+  background: $color-border;
+}
+
+.timelineItemActive .timelineLine {
+  background: linear-gradient(to bottom, $color-primary, $color-border);
+}
+
+.timelineItemDone .timelineLine {
+  background: $color-primary;
+}
+
+.timelineDot {
+  position: absolute;
+  left: 0;
+  top: 4rpx;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-bg-disable;
+  color: $color-text-tertiary;
+  font-size: 20rpx;
+  border: 4rpx solid $color-bg-card;
+  box-shadow: 0 0 0 2rpx $color-border;
+  z-index: 1;
+}
+
+.timelineItemActive .timelineDot {
+  background: $color-primary;
+  color: #fff;
+  box-shadow: 0 0 0 2rpx $color-primary, 0 0 20rpx rgba(46, 125, 50, 0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.timelineItemDone .timelineDot {
+  background: $color-primary;
+  color: #fff;
+  box-shadow: 0 0 0 2rpx $color-primary;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.timelineContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-tertiary;
+  margin-bottom: 4rpx;
+}
+
+.timelineItemActive .timelineTitle {
+  color: $color-primary;
+}
+
+.timelineItemDone .timelineTitle {
+  color: $color-text-primary;
+}
+
+.timelineTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.timelineItemActive .timelineTime,
+.timelineItemDone .timelineTime {
+  color: $color-text-secondary;
+}

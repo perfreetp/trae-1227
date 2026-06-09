@@ -8,7 +8,20 @@ import EmptyState from '@/components/EmptyState';
 import styles from './index.module.scss';
 
 const getOrderTime = (order: Task): string => {
-  return order.completeTime || order.arrivalTime || order.departureTime || order.loadingTime || order.acceptTime || order.publishTime;
+  if (order.status === 'completed') {
+    return order.completeTime || order.arrivalTime || order.publishTime;
+  }
+  return order.publishTime;
+};
+
+const getOrderTimeLabel = (order: Task): string => {
+  if (order.status === 'completed') return '完成于';
+  if (order.status === 'arrived') return '到达于';
+  if (order.status === 'transporting') return '运输中 · 发布于';
+  if (order.status === 'loading') return '装车中 · 发布于';
+  if (order.status === 'accepted') return '已接单 · 发布于';
+  if (order.status === 'cancelled') return '已取消 · 发布于';
+  return '发布于';
 };
 
 const HistoryOrdersPage: React.FC = () => {
@@ -150,7 +163,7 @@ const HistoryOrdersPage: React.FC = () => {
               <View className={styles.orderHeader}>
                 <View>
                   <Text className={styles.orderNo}>{order.taskNo}</Text>
-                  <Text className={styles.orderDate}> · {formatTime(getOrderTime(order))}</Text>
+                  <Text className={styles.orderDate}> · {getOrderTimeLabel(order)} {formatTime(getOrderTime(order))}</Text>
                 </View>
                 <View
                   className={styles.statusBadge}

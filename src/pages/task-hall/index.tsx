@@ -1,12 +1,14 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Input, ScrollView, Button } from '@tarojs/components';
-import Taro, { usePullDownRefresh } from '@tarojs/taro';
+import Taro, { usePullDownRefresh, useDidShow, useDidHide } from '@tarojs/taro';
 import TaskCard from '@/components/TaskCard';
 import EmptyState from '@/components/EmptyState';
 import { mockTasks } from '@/data/tasks';
 import { Task, TaskStatus } from '@/types/task';
 import classnames from 'classnames';
 import styles from './index.module.scss';
+
+const STORAGE_KEY = 'task_hall_filter_v1';
 
 const filters = [
   { key: 'all', label: '全部' },
@@ -17,11 +19,42 @@ const filters = [
   { key: 'completed', label: '已完成' }
 ];
 
+interface SavedFilter {
+  activeFilter: string;
+  searchKeyword: string;
+  plateFilter: string;
+}
+
+const loadSavedFilter = (): SavedFilter | null => {
+  try {
+    const saved = Taro.getStorageSync(STORAGE_KEY);
+    if (saved && typeof saved === 'object') return saved;
+  } catch (_) {}
+  return null;
+};
+
+const saveFilter = (filter: SavedFilter) => {
+  try {
+    Taro.setStorageSync(STORAGE_KEY, filter);
+  } catch (_) {}
+};
+
+const clearSavedFilter = () => {
+  try {
+    Taro.removeStorageSync(STORAGE_KEY);
+  } catch (_) {}
+};
+
 const TaskHallPage: React.FC = () => {
-  const [activeFilter, setActiveFilter] = useState<string>('all');
-  const [searchKeyword, setSearchKeyword] = useState<string>('');
-  const [plateFilter, setPlateFilter] = useState<string>('');
+  const saved = loadSavedFilter();
+  const [activeFilter, setActiveFilter] = useState<string>(saved?.activeFilter || 'all');
+  const [searchKeyword, setSearchKeyword] = useState<string>(saved?.searchKeyword || '');
+  const [plateFilter, setPlateFilter] = useState<string>(saved?.plateFilter || '');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+
+  useEffect(() => {
+    saveFilter({ activeFilter, searchKeyword, plateFilter });
+  }, [activeFilter, searchKeyword, plateFilter]);
 
   usePullDownRefresh(() => {
     setIsRefreshing(true);
@@ -87,10 +120,18 @@ const TaskHallPage: React.FC = () => {
   const clearPlateFilter = () => {
     if (plateFilter) {
       setPlateFilter('');
-      Taro.showToast({ title: '已清除筛选', icon: 'none' });
+      Taro.showToast({ title: '已清除车牌筛选', icon: 'none' });
     } else {
       handlePlateFilter();
     }
+  };
+
+  const handleResetAllFilter = () => {
+    setActiveFilter('all');
+    setSearchKeyword('');
+    setPlateFilter('');
+    clearSavedFilter();
+    Taro.showToast({ title: '已重置所有筛选', icon: 'success' });
   };
 
   return (
@@ -153,6 +194,21 @@ const TaskHallPage: React.FC = () => {
               {plateFilter ? `🚚 ${plateFilter} ✕` : '🚚 车牌筛选'}
             </Text>
           </Button>
+          {(searchKeyword || activeFilter !== 'all' || plateFilter) && (
+            <Button
+              className={styles.plateBtn}
+              style={{
+                background: 'transparent',
+                border: '2rpx dashed #C9CDD4',
+                marginLeft: '16rpx'
+              }}
+              onClick={handleResetAllFilter}
+            >
+              <Text className={styles.plateBtnText} style={{ color: '#86909C' }}>
+                ↺ 重置
+              </Text>
+            </Button>
+          )}
         </View>
       </View>
 

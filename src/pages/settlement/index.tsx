@@ -24,6 +24,8 @@ const SettlementPage: React.FC = () => {
   const taskIdFromRouter = router.params.taskId;
   const [activeTab, setActiveTab] = useState<TabType>(taskIdFromRouter ? 'apply' : 'list');
   const [filterStatus, setFilterStatus] = useState<SettlementStatus | 'all'>('all');
+  const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [filterPlate, setFilterPlate] = useState<string>('');
   const [settlements, setSettlements] = useState<Settlement[]>(mockSettlements);
   const [selectedTaskId, setSelectedTaskId] = useState<string>(taskIdFromRouter || '');
   const [actualWeight, setActualWeight] = useState<string>('');
@@ -47,23 +49,89 @@ const SettlementPage: React.FC = () => {
     [selectedTaskId]
   );
 
+  const availableMonths = useMemo(() => {
+    const set = new Set<string>();
+    settlements.forEach(s => {
+      if (s.applyTime) set.add(s.applyTime.slice(0, 7));
+    });
+    return Array.from(set).sort().reverse();
+  }, [settlements]);
+
+  const availablePlates = useMemo(() => {
+    const set = new Set<string>();
+    settlements.forEach(s => {
+      if (s.plateNumber) set.add(s.plateNumber);
+    });
+    return Array.from(set);
+  }, [settlements]);
+
   const filteredSettlements = useMemo(() => {
-    if (filterStatus === 'all') return settlements;
-    return settlements.filter(s => s.status === filterStatus);
-  }, [settlements, filterStatus]);
+    return settlements.filter(s => {
+      if (filterStatus !== 'all' && s.status !== filterStatus) return false;
+      if (filterMonth !== 'all') {
+        const sMonth = s.applyTime ? s.applyTime.slice(0, 7) : '';
+        if (sMonth !== filterMonth) return false;
+      }
+      if (filterPlate && !s.plateNumber.includes(filterPlate)) return false;
+      return true;
+    });
+  }, [settlements, filterStatus, filterMonth, filterPlate]);
 
   const stats = useMemo(() => {
-    const pending = settlements.filter(s => s.status === 'pending').length;
-    const approved = settlements.filter(s => s.status === 'approved').length;
-    const paid = settlements.filter(s => s.status === 'paid').length;
-    const totalPending = settlements
+    const list = filteredSettlements;
+    const pending = list.filter(s => s.status === 'pending').length;
+    const approved = list.filter(s => s.status === 'approved').length;
+    const paid = list.filter(s => s.status === 'paid').length;
+    const totalPending = list
       .filter(s => s.status === 'pending' || s.status === 'approved')
       .reduce((sum, s) => sum + s.totalFee, 0);
-    const totalPaid = settlements
+    const totalPaid = list
       .filter(s => s.status === 'paid')
       .reduce((sum, s) => sum + s.totalFee, 0);
     return { pending, approved, paid, totalPending, totalPaid };
-  }, [settlements]);
+  }, [filteredSettlements]);
+
+  const handleMonthSelect = () => {
+    const items = ['全部月份', ...availableMonths];
+    Taro.showActionSheet({
+      itemList: items,
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          setFilterMonth('all');
+        } else if (res.tapIndex > 0 && res.tapIndex < items.length) {
+          setFilterMonth(items[res.tapIndex]);
+        }
+      }
+    });
+  };
+
+  const handlePlateSelect = () => {
+    const items = filterPlate ? ['清除车牌筛选', ...availablePlates] : [...availablePlates];
+    Taro.showActionSheet({
+      itemList: items.length > 0 ? items : ['暂无可用车牌'],
+      success: (res) => {
+        if (items.length === 0 || items[0] === '暂无可用车牌') return;
+        if (filterPlate) {
+          if (res.tapIndex === 0) {
+            setFilterPlate('');
+          } else if (res.tapIndex > 0 && res.tapIndex < items.length) {
+            setFilterPlate(items[res.tapIndex]);
+          }
+        } else {
+          if (res.tapIndex >= 0 && res.tapIndex < items.length) {
+            setFilterPlate(items[res.tapIndex]);
+          }
+        }
+      }
+    });
+  };
+
+  const handleResetFilter = () => {
+    setFilterStatus('all');
+    setFilterMonth('all');
+    setFilterPlate('');
+    Taro.showToast({ title: '已重置筛选', icon: 'success' });
+  };
 
   const estimatedFee = useMemo(() => {
     const weight = parseFloat(actualWeight) || selectedTask?.estimatedWeight || 0;
@@ -154,7 +222,9 @@ const SettlementPage: React.FC = () => {
         <Text className={styles.summaryTitle}>💰 结算中心</Text>
         <View className={styles.summaryMain}>
           <Text className={styles.summaryAmount}>{formatFee(stats.totalPending + stats.totalPaid)}</Text>
-          <Text className={styles.summaryUnit}>累计结算总额</Text>
+          <Text className={styles.summaryUnit}>
+            {(filterMonth !== 'all' || filterPlate || filterStatus !== 'all') ? '筛选范围金额' : '累计结算总额'}
+          </Text>
         </View>
         <View className={styles.summaryStats}>
           <View className={styles.summaryStat}>
@@ -168,8 +238,22 @@ const SettlementPage: React.FC = () => {
           </View>
           <View className={styles.summaryStatDivider} />
           <View className={styles.summaryStat}>
-            <Text className={styles.summaryStatValue}>{formatFee(stats.totalPaid)}</Text>
+            <Text className={styles.summaryStatValue}>{stats.paid}</Text>
             <Text className={styles.summaryStatLabel}>已到账</Text>
+          </View>
+        </View>
+        <View className={styles.summaryDetail}>
+          <View className={styles.summaryDetailItem}>
+            <Text className={styles.summaryDetailLabel}>⏳ 待审核金额</Text>
+            <Text className={`${styles.summaryDetailValue} ${styles.summaryDetailPending}`}>
+              {formatFee(stats.totalPending)}
+            </Text>
+          </View>
+          <View className={styles.summaryDetailItem}>
+            <Text className={styles.summaryDetailLabel}>✅ 已到账金额</Text>
+            <Text className={`${styles.summaryDetailValue} ${styles.summaryDetailPaid}`}>
+              {formatFee(stats.totalPaid)}
+            </Text>
           </View>
         </View>
       </View>
@@ -196,6 +280,29 @@ const SettlementPage: React.FC = () => {
 
       {activeTab === 'list' && (
         <>
+          <View className={styles.filterBar}>
+            <View
+              className={`${styles.filterChip} ${filterMonth !== 'all' ? styles.filterChipActive : ''}`}
+              onClick={handleMonthSelect}
+            >
+              📅 {filterMonth !== 'all' ? filterMonth : '全部月份'}
+            </View>
+            <View
+              className={`${styles.filterChip} ${filterPlate ? styles.filterChipActive : ''}`}
+              onClick={handlePlateSelect}
+            >
+              🚚 {filterPlate || '全部车牌'}
+            </View>
+            {(filterMonth !== 'all' || filterPlate || filterStatus !== 'all') && (
+              <View
+                className={`${styles.filterChip} ${styles.filterChipReset}`}
+                onClick={handleResetFilter}
+              >
+                ↺ 重置
+              </View>
+            )}
+          </View>
+
           <View className={styles.tabs} style={{ marginBottom: '32rpx' }}>
             {[
               { key: 'all', label: '全部' },
@@ -217,7 +324,25 @@ const SettlementPage: React.FC = () => {
           </View>
 
           {filteredSettlements.length === 0 ? (
-            <EmptyState text="暂无结算记录" actionText="去申请结算" onAction={() => setActiveTab('apply')} />
+            <EmptyState
+              icon="💳"
+              text="暂无符合条件的结算记录"
+              description={
+                (filterMonth !== 'all' || filterPlate || filterStatus !== 'all')
+                  ? '试试调整筛选条件'
+                  : '还没有申请过结算，完成运单后可以申请结算'
+              }
+              actionText={
+                (filterMonth !== 'all' || filterPlate || filterStatus !== 'all') ? '重置筛选' : '去申请结算'
+              }
+              onAction={() => {
+                if (filterMonth !== 'all' || filterPlate || filterStatus !== 'all') {
+                  handleResetFilter();
+                } else {
+                  setActiveTab('apply');
+                }
+              }}
+            />
           ) : (
             filteredSettlements.map(item => {
               const statusInfo = settlementStatusMap[item.status];

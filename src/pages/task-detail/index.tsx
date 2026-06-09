@@ -15,6 +15,36 @@ const TaskDetailPage: React.FC = () => {
 
   const statusConfig = statusMap[task.status];
 
+  const timelineSteps = [
+    { key: 'publish', label: '运单发布', icon: '📢', time: task.publishTime },
+    { key: 'accept', label: '司机接单', icon: '✅', time: task.acceptTime },
+    { key: 'loading', label: '装车完成', icon: '📦', time: task.loadingTime },
+    { key: 'departure', label: '发车出发', icon: '🚚', time: task.departureTime },
+    { key: 'arrival', label: '到达收货', icon: '🏁', time: task.arrivalTime },
+    { key: 'complete', label: '运输完成', icon: '🎉', time: task.completeTime }
+  ];
+
+  const getStepStatus = (stepKey: string): 'done' | 'active' | 'todo' => {
+    const statusOrder = ['publish', 'accept', 'loading', 'departure', 'arrival', 'complete'];
+    const currentStepMap: Record<string, string> = {
+      pending: 'publish',
+      accepted: 'accept',
+      loading: 'loading',
+      transporting: 'departure',
+      arrived: 'arrival',
+      completed: 'complete',
+      cancelled: 'publish'
+    };
+    const currentStep = currentStepMap[task.status] || 'publish';
+    const stepIdx = statusOrder.indexOf(stepKey);
+    const currentIdx = statusOrder.indexOf(currentStep);
+    const step = timelineSteps.find(s => s.key === stepKey);
+    if (step?.time) return 'done';
+    if (stepIdx < currentIdx) return 'done';
+    if (stepIdx === currentIdx) return 'active';
+    return 'todo';
+  };
+
   const handleAccept = () => {
     Taro.showModal({
       title: '确认接单',
@@ -134,6 +164,38 @@ const TaskDetailPage: React.FC = () => {
           {task.status === 'arrived' && '已到达收购点，请扫码确认并完成交接'}
           {task.status === 'completed' && `运输已完成，运费¥${task.actualFee || task.estimatedFee}，感谢您的服务`}
         </Text>
+      </View>
+
+      <View className={styles.timelineCard}>
+        <Text className={styles.cardTitle}>
+          <Text className={styles.cardTitleIcon}>⏱️</Text>
+          运输进度
+        </Text>
+        <View className={styles.timelineList}>
+          {timelineSteps.map(step => {
+            const stepStatus = getStepStatus(step.key);
+            return (
+              <View
+                key={step.key}
+                className={`${styles.timelineItem} ${
+                  stepStatus === 'active' ? styles.timelineItemActive :
+                  stepStatus === 'done' ? styles.timelineItemDone : ''
+                }`}
+              >
+                <View className={styles.timelineLine} />
+                <View className={styles.timelineDot}>
+                  <Text>{step.icon}</Text>
+                </View>
+                <View className={styles.timelineContent}>
+                  <Text className={styles.timelineTitle}>{step.label}</Text>
+                  <Text className={styles.timelineTime}>
+                    {step.time || (stepStatus === 'active' ? '进行中...' : '待开始')}
+                  </Text>
+                </View>
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       <View className={styles.feeCard}>

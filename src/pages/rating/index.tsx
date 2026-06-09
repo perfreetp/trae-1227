@@ -76,6 +76,8 @@ const RatingPage: React.FC = () => {
   const [comment, setComment] = useState('');
   const [overallStars, setOverallStars] = useState(0);
   const [histories, setHistories] = useState<RatingHistory[]>(initialHistories);
+  const [filterPartnerType, setFilterPartnerType] = useState<'all' | PartnerType>('all');
+  const [filterStars, setFilterStars] = useState<0 | 1 | 2 | 3 | 4 | 5>(0);
 
   const ratingItems = useMemo(() => {
     if (partnerType === 'farmer') {
@@ -193,6 +195,20 @@ const RatingPage: React.FC = () => {
     } else {
       Taro.showToast({ title: '运单详情暂不可用', icon: 'none' });
     }
+  };
+
+  const filteredHistories = useMemo(() => {
+    return histories.filter(h => {
+      if (filterPartnerType !== 'all' && h.partnerRole !== filterPartnerType) return false;
+      if (filterStars > 0 && h.stars !== filterStars) return false;
+      return true;
+    });
+  }, [histories, filterPartnerType, filterStars]);
+
+  const handleResetRatingFilter = () => {
+    setFilterPartnerType('all');
+    setFilterStars(0);
+    Taro.showToast({ title: '已重置筛选', icon: 'success' });
   };
 
   return (
@@ -378,16 +394,72 @@ const RatingPage: React.FC = () => {
 
       {activeTab === 'history' && (
         <>
-          {histories.length === 0 ? (
+          <View className={styles.filterBar}>
+            <View className={styles.filterRow}>
+              <Text className={styles.filterLabel}>合作方：</Text>
+              {[
+                { key: 'all', label: '全部' },
+                { key: 'farmer', label: '👨‍🌾 竹农' },
+                { key: 'buyer', label: '🏭 收购点' }
+              ].map(item => (
+                <View
+                  key={item.key}
+                  className={`${styles.filterChip} ${filterPartnerType === item.key ? styles.filterChipActive : ''}`}
+                  onClick={() => setFilterPartnerType(item.key as any)}
+                >
+                  {item.label}
+                </View>
+              ))}
+            </View>
+            <View className={styles.filterRow}>
+              <Text className={styles.filterLabel}>星级：</Text>
+              {[
+                { key: 0, label: '全部' },
+                { key: 5, label: '★★★★★' },
+                { key: 4, label: '★★★★' },
+                { key: 3, label: '★★★' },
+                { key: 2, label: '★★' },
+                { key: 1, label: '★' }
+              ].map(item => (
+                <View
+                  key={item.key}
+                  className={`${styles.filterChip} ${filterStars === item.key ? styles.filterChipActive : ''}`}
+                  onClick={() => setFilterStars(item.key as any)}
+                >
+                  {item.label}
+                </View>
+              ))}
+              {(filterPartnerType !== 'all' || filterStars > 0) && (
+                <View
+                  className={`${styles.filterChip} ${styles.filterChipReset}`}
+                  onClick={handleResetRatingFilter}
+                >
+                  ↺ 重置
+                </View>
+              )}
+            </View>
+          </View>
+
+          {filteredHistories.length === 0 ? (
             <EmptyState
               icon="⭐"
-              text="暂无评价记录"
-              description="完成运单后可以对合作方进行评价~"
-              actionText="去写评价"
-              onAction={() => setActiveTab('rating')}
+              text={histories.length === 0 ? '暂无评价记录' : '暂无符合条件的评价'}
+              description={
+                histories.length === 0
+                  ? '完成运单后可以对合作方进行评价~'
+                  : '试试调整筛选条件看看其他评价'
+              }
+              actionText={histories.length === 0 ? '去写评价' : ((filterPartnerType !== 'all' || filterStars > 0) ? '重置筛选' : undefined)}
+              onAction={() => {
+                if (histories.length === 0) {
+                  setActiveTab('rating');
+                } else if (filterPartnerType !== 'all' || filterStars > 0) {
+                  handleResetRatingFilter();
+                }
+              }}
             />
           ) : (
-            histories.map(h => (
+            filteredHistories.map(h => (
               <View key={h.id} className={styles.historyCard}>
                 <View className={styles.historyHeader}>
                   <View className={styles.historyPartner}>
@@ -421,7 +493,7 @@ const RatingPage: React.FC = () => {
                 )}
 
                 <Text className={styles.historyTask} onClick={() => handleViewTask(h.taskNo)}>
-                  📦 {h.taskNo} · {h.createTime}
+                  📦 {h.taskNo} · {h.createTime} → 查看运单
                 </Text>
               </View>
             ))
