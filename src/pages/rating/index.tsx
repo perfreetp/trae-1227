@@ -3,6 +3,7 @@ import { View, Text, Button, Textarea } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { mockTasks } from '@/data/tasks';
 import { Task } from '@/types/task';
+import EmptyState from '@/components/EmptyState';
 import styles from './index.module.scss';
 
 type TabType = 'rating' | 'history';
@@ -20,14 +21,61 @@ interface RatingHistory {
   createTime: string;
 }
 
+const initialHistories: RatingHistory[] = [
+  {
+    id: '1',
+    partnerName: '李竹农',
+    partnerRole: 'farmer',
+    partnerAvatar: '👨‍🌾',
+    stars: 5,
+    content: '李叔备货很准时，竹子质量也很好，数量清点准确，下次继续合作！',
+    tags: ['备货准时', '竹子新鲜', '数量准确'],
+    taskNo: 'PZ20260607006',
+    createTime: '2026-06-08 14:30'
+  },
+  {
+    id: '2',
+    partnerName: '濛阳竹制品厂',
+    partnerRole: 'buyer',
+    partnerAvatar: '🏭',
+    stars: 4,
+    content: '验货比较专业，卸货速度也快，就是结算稍微慢了一天，整体不错。',
+    tags: ['验货专业', '卸货快捷'],
+    taskNo: 'PZ20260605003',
+    createTime: '2026-06-06 10:20'
+  },
+  {
+    id: '3',
+    partnerName: '王竹农',
+    partnerRole: 'farmer',
+    partnerAvatar: '👨‍🌾',
+    stars: 5,
+    content: '非常好的合作对象，竹子新鲜度高，人也很好说话，强烈推荐！',
+    tags: ['竹子新鲜', '态度友好', '值得推荐'],
+    taskNo: 'PZ20260603001',
+    createTime: '2026-06-04 16:45'
+  }
+];
+
+const getTaskTime = (task: Task | undefined): string => {
+  if (!task) return '';
+  return task.completeTime || task.arrivalTime || task.departureTime || task.loadingTime || task.acceptTime || task.publishTime;
+};
+
+const formatDateStr = (timeStr: string): string => {
+  if (!timeStr) return '';
+  return timeStr.slice(0, 10);
+};
+
 const RatingPage: React.FC = () => {
   const router = useRouter();
   const taskId = router.params.taskId;
-  const [activeTab, setActiveTab] = useState<TabType>(taskId ? 'rating' : 'rating');
+  const [activeTab, setActiveTab] = useState<TabType>('rating');
   const [partnerType, setPartnerType] = useState<PartnerType>('farmer');
   const [anonymous, setAnonymous] = useState(false);
   const [comment, setComment] = useState('');
   const [overallStars, setOverallStars] = useState(0);
+  const [histories, setHistories] = useState<RatingHistory[]>(initialHistories);
 
   const ratingItems = useMemo(() => {
     if (partnerType === 'farmer') {
@@ -58,48 +106,14 @@ const RatingPage: React.FC = () => {
     return ['卸货快捷', '验货专业', '结算及时', '态度友好', '流程规范', '管理有序', '长期合作'];
   }, [partnerType]);
 
-  const mockHistories: RatingHistory[] = [
-    {
-      id: '1',
-      partnerName: '李竹农',
-      partnerRole: 'farmer',
-      partnerAvatar: '👨‍🌾',
-      stars: 5,
-      content: '李叔备货很准时，竹子质量也很好，数量清点准确，下次继续合作！',
-      tags: ['备货准时', '竹子新鲜', '数量准确'],
-      taskNo: 'PZ20260607006',
-      createTime: '2026-06-08 14:30'
-    },
-    {
-      id: '2',
-      partnerName: '濛阳竹制品厂',
-      partnerRole: 'buyer',
-      partnerAvatar: '🏭',
-      stars: 4,
-      content: '验货比较专业，卸货速度也快，就是结算稍微慢了一天，整体不错。',
-      tags: ['验货专业', '卸货快捷'],
-      taskNo: 'PZ20260605003',
-      createTime: '2026-06-06 10:20'
-    },
-    {
-      id: '3',
-      partnerName: '王竹农',
-      partnerRole: 'farmer',
-      partnerAvatar: '👨‍🌾',
-      stars: 5,
-      content: '非常好的合作对象，竹子新鲜度高，人也很好说话，强烈推荐！',
-      tags: ['竹子新鲜', '态度友好', '值得推荐'],
-      taskNo: 'PZ20260603001',
-      createTime: '2026-06-04 16:45'
-    }
-  ];
-
   const currentTask = useMemo<Task | undefined>(() => {
     if (taskId) {
       return mockTasks.find(t => t.id === taskId);
     }
     return mockTasks.find(t => t.status === 'completed');
   }, [taskId]);
+
+  const taskTimeStr = useMemo(() => formatDateStr(getTaskTime(currentTask)), [currentTask]);
 
   const handleStarClick = (key: string, value: number) => {
     setRatings({ ...ratings, [key]: value });
@@ -132,9 +146,34 @@ const RatingPage: React.FC = () => {
     Taro.showLoading({ title: '提交中...' });
     setTimeout(() => {
       Taro.hideLoading();
+      const finalStars = overallStars > 0 ? overallStars : Math.max(1, Math.round(totalRating / itemCount));
+      const nowStr = new Date().toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).replace(/\//g, '-');
+
+      const newHistory: RatingHistory = {
+        id: String(Date.now()),
+        partnerName: partnerType === 'farmer'
+          ? (currentTask?.farmerName || '合作竹农')
+          : '彭州收购点',
+        partnerRole: partnerType,
+        partnerAvatar: partnerType === 'farmer' ? '👨‍🌾' : '🏭',
+        stars: finalStars,
+        content: comment || '用户未填写文字评价',
+        tags: [...selectedTags],
+        taskNo: currentTask?.taskNo || 'PZ000000000',
+        createTime: nowStr
+      };
+
+      setHistories([newHistory, ...histories]);
+
       Taro.showModal({
         title: '评价提交成功',
-        content: `感谢您的评价！您的反馈将帮助其他司机更好地选择合作方。\n\n综合评分：${overallStars || (totalRating / itemCount).toFixed(1)} 星\n评价标签：${selectedTags.join('、') || '无'}`,
+        content: `感谢您的评价！您的反馈将帮助其他司机更好地选择合作方。\n\n综合评分：${finalStars}.0 星\n评价标签：${selectedTags.join('、') || '无'}`,
         showCancel: false,
         success: () => {
           setRatings({});
@@ -151,6 +190,8 @@ const RatingPage: React.FC = () => {
     const task = mockTasks.find(t => t.taskNo === taskNo);
     if (task) {
       Taro.navigateTo({ url: `/pages/task-detail/index?id=${task.id}` });
+    } else {
+      Taro.showToast({ title: '运单详情暂不可用', icon: 'none' });
     }
   };
 
@@ -172,6 +213,28 @@ const RatingPage: React.FC = () => {
           <Text className={activeTab === 'history' ? styles.tabTextActive : styles.tabText}>
             📋 评价记录
           </Text>
+          {histories.length > 0 && (
+            <Text
+              style={{
+                position: 'absolute',
+                top: '8rpx',
+                right: '20rpx',
+                minWidth: '32rpx',
+                height: '32rpx',
+                padding: '0 8rpx',
+                background: '#ED6C02',
+                color: '#fff',
+                fontSize: '20rpx',
+                borderRadius: '999rpx',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                lineHeight: 1
+              }}
+            >
+              {histories.length}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -209,7 +272,9 @@ const RatingPage: React.FC = () => {
               </View>
               <View className={styles.partnerInfo}>
                 <Text className={styles.partnerName}>
-                  {partnerType === 'farmer' ? '李竹农' : '濛阳竹制品厂'}
+                  {partnerType === 'farmer'
+                    ? (currentTask?.farmerName || '合作竹农')
+                    : '濛阳竹制品厂'}
                 </Text>
                 <View className={styles.partnerRole}>
                   {partnerType === 'farmer' ? '竹农' : '收购点'}
@@ -220,7 +285,7 @@ const RatingPage: React.FC = () => {
             {currentTask && (
               <View className={styles.taskInfo}>
                 <Text className={styles.taskNo}>📦 {currentTask.taskNo}</Text>
-                <Text className={styles.taskDate}>{currentTask.createTime.slice(0, 10)}</Text>
+                <Text className={styles.taskDate}>{taskTimeStr || '时间待更新'}</Text>
               </View>
             )}
 
@@ -313,10 +378,16 @@ const RatingPage: React.FC = () => {
 
       {activeTab === 'history' && (
         <>
-          {mockHistories.length === 0 ? (
-            <EmptyState text="暂无评价记录" />
+          {histories.length === 0 ? (
+            <EmptyState
+              icon="⭐"
+              text="暂无评价记录"
+              description="完成运单后可以对合作方进行评价~"
+              actionText="去写评价"
+              onAction={() => setActiveTab('rating')}
+            />
           ) : (
-            mockHistories.map(h => (
+            histories.map(h => (
               <View key={h.id} className={styles.historyCard}>
                 <View className={styles.historyHeader}>
                   <View className={styles.historyPartner}>

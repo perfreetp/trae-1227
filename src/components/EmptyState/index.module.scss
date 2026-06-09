@@ -33,4 +33,20 @@
 .desc {
   font-size: $font-size-sm;
   color: $color-text-tertiary;
+  margin-bottom: $spacing-lg;
+}
+
+.actionBtn {
+  @include button-reset;
+  padding: 0 $spacing-xl;
+  height: $button-height-md;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  border-radius: $radius-button;
+  box-shadow: 0 4rpx 12rpx rgba(46, 125, 50, 0.25);
+}
+
+.actionText {
+  font-size: $font-size-sm;
+  color: #fff;
+  font-weight: $font-weight-semibold;
 }

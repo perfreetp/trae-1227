@@ -34,20 +34,27 @@ const TaskHallPage: React.FC = () => {
 
   const filteredTasks = useMemo(() => {
     return mockTasks.filter(task => {
+      // 条件1：状态筛选
       if (activeFilter !== 'all' && task.status !== activeFilter) {
         return false;
       }
+      // 条件2：关键词搜索（运单号、装货点、收货点）
       if (searchKeyword) {
         const keyword = searchKeyword.toLowerCase();
-        return (
-          task.taskNo.toLowerCase().includes(keyword) ||
-          task.pickupAddress.includes(keyword) ||
-          task.deliveryAddress.includes(keyword)
-        );
+        const matchNo = task.taskNo.toLowerCase().includes(keyword);
+        const matchPickup = task.pickupAddress.includes(keyword);
+        const matchDelivery = task.deliveryAddress.includes(keyword);
+        if (!matchNo && !matchPickup && !matchDelivery) {
+          return false;
+        }
       }
-      if (plateFilter && !task.plateNumber.toLowerCase().includes(plateFilter.toLowerCase())) {
-        return false;
+      // 条件3：车牌筛选（与关键词叠加使用，AND关系）
+      if (plateFilter) {
+        if (!task.plateNumber.toLowerCase().includes(plateFilter.toLowerCase())) {
+          return false;
+        }
       }
+      // 所有条件都满足才保留
       return true;
     });
   }, [activeFilter, searchKeyword, plateFilter]);
@@ -182,8 +189,16 @@ const TaskHallPage: React.FC = () => {
           ))
         ) : (
           <EmptyState
-            title='暂无匹配的任务'
-            description='试试调整筛选条件或搜索关键词'
+            icon="📋"
+            text="暂无匹配的任务"
+            description={searchKeyword || plateFilter || activeFilter !== 'all' ? '试试调整筛选条件或搜索关键词' : '暂时没有任务，稍后再来看看吧'}
+            actionText={searchKeyword || plateFilter || activeFilter !== 'all' ? '重置筛选' : undefined}
+            onAction={searchKeyword || plateFilter || activeFilter !== 'all' ? () => {
+              setSearchKeyword('');
+              setPlateFilter('');
+              setActiveFilter('all');
+              Taro.showToast({ title: '已重置筛选', icon: 'success' });
+            } : undefined}
           />
         )}
       </View>

@@ -7,6 +7,10 @@ import { statusMap, formatFee, formatWeight, formatTime } from '@/utils';
 import EmptyState from '@/components/EmptyState';
 import styles from './index.module.scss';
 
+const getOrderTime = (order: Task): string => {
+  return order.completeTime || order.arrivalTime || order.departureTime || order.loadingTime || order.acceptTime || order.publishTime;
+};
+
 const HistoryOrdersPage: React.FC = () => {
   const [keyword, setKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
@@ -125,7 +129,19 @@ const HistoryOrdersPage: React.FC = () => {
       </View>
 
       {filteredOrders.length === 0 ? (
-        <EmptyState text="暂无运单记录" />
+        <EmptyState
+          icon="📦"
+          text="暂无运单记录"
+          description={keyword || statusFilter !== 'all' ? '试试调整搜索词或筛选条件' : '快去任务大厅接第一单吧'}
+          actionText={keyword || statusFilter !== 'all' ? '重置筛选' : '去任务大厅'}
+          onAction={() => {
+            if (keyword || statusFilter !== 'all') {
+              handleResetFilter();
+            } else {
+              Taro.switchTab({ url: '/pages/task-hall/index' });
+            }
+          }}
+        />
       ) : (
         filteredOrders.map(order => {
           const statusInfo = statusMap[order.status];
@@ -134,7 +150,7 @@ const HistoryOrdersPage: React.FC = () => {
               <View className={styles.orderHeader}>
                 <View>
                   <Text className={styles.orderNo}>{order.taskNo}</Text>
-                  <Text className={styles.orderDate}> · {formatTime(order.createTime)}</Text>
+                  <Text className={styles.orderDate}> · {formatTime(getOrderTime(order))}</Text>
                 </View>
                 <View
                   className={styles.statusBadge}

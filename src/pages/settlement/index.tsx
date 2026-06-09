@@ -10,6 +10,15 @@ import styles from './index.module.scss';
 
 type TabType = 'list' | 'apply';
 
+// 统一运费计算函数：重量(公斤) × 单价(元/吨) = 运费(元)
+// 公式：运费 = (重量 / 1000) × 单价
+// 支持：小于一吨、整数吨、带小数吨的所有情况
+const calculateFee = (weightKg: number, pricePerTon: number): number => {
+  if (!weightKg || !pricePerTon || weightKg <= 0 || pricePerTon <= 0) return 0;
+  const weightTon = weightKg / 1000; // 统一换算为吨
+  return weightTon * pricePerTon;
+};
+
 const SettlementPage: React.FC = () => {
   const router = useRouter();
   const taskIdFromRouter = router.params.taskId;
@@ -59,9 +68,7 @@ const SettlementPage: React.FC = () => {
   const estimatedFee = useMemo(() => {
     const weight = parseFloat(actualWeight) || selectedTask?.estimatedWeight || 0;
     const price = parseFloat(unitPrice) || 0;
-    return weight >= 1000
-      ? (weight / 1000) * price
-      : weight * price / 1000 * 1000;
+    return calculateFee(weight, price);
   }, [actualWeight, unitPrice, selectedTask]);
 
   const handleSelectTask = () => {
@@ -99,6 +106,10 @@ const SettlementPage: React.FC = () => {
     Taro.showLoading({ title: '提交中...' });
     setTimeout(() => {
       Taro.hideLoading();
+      const weightNum = parseFloat(actualWeight) || selectedTask?.estimatedWeight || 0;
+      const priceNum = parseFloat(unitPrice) || 82;
+      const calcFee = Math.round(calculateFee(weightNum, priceNum));
+
       const newSettlement: Settlement = {
         id: String(Date.now()),
         settlementNo: `JS${Date.now().toString().slice(-10)}`,
@@ -107,11 +118,11 @@ const SettlementPage: React.FC = () => {
         driverName: '赵师傅',
         plateNumber: selectedTask?.plateNumber || '川A·33333',
         estimatedWeight: selectedTask?.estimatedWeight || 0,
-        actualWeight: parseFloat(actualWeight) || 0,
-        unitPrice: parseFloat(unitPrice) || 82,
-        estimatedFee: selectedTask?.estimatedFee || 0,
-        actualFee: Math.round(estimatedFee),
-        totalFee: Math.round(estimatedFee),
+        actualWeight: weightNum,
+        unitPrice: priceNum,
+        estimatedFee: selectedTask?.estimatedFee || Math.round(calculateFee(selectedTask?.estimatedWeight || 0, priceNum)),
+        actualFee: calcFee,
+        totalFee: calcFee,
         status: 'pending',
         applyTime: new Date().toLocaleString('zh-CN', {
           year: 'numeric',

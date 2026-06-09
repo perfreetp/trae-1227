@@ -233,9 +233,13 @@ const MonthlyDetailPage: React.FC = () => {
         </View>
 
         {detailData.details.length === 0 ? (
-          <View style={{ padding: '60rpx 32rpx' }}>
-            <EmptyState text="本月暂无运输记录" />
-          </View>
+          <EmptyState
+            icon="📊"
+            text="本月暂无运输记录"
+            description="完成运单后这里会显示月度明细~"
+            actionText="去任务大厅"
+            onAction={() => Taro.switchTab({ url: '/pages/task-hall/index' })}
+          />
         ) : (
           detailData.details.map((item, idx) => (
             <View key={idx} className={styles.tableRow} onClick={() => handleRowClick(item)}>
