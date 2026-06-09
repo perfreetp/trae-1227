@@ -240,3 +240,86 @@
   color: $color-text-white;
   font-weight: $font-weight-medium;
 }
+
+.recentCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.recentHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+}
+
+.recentTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+}
+
+.recentClear {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.recentItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-page;
+  border-radius: $radius-md;
+  transition: all $transition-base;
+
+  &:active {
+    background: $color-border;
+  }
+}
+
+.recentItemLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.recentItemNo {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.recentItemRoute {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.recentItemMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4rpx;
+}
+
+.recentItemTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.recentItemGo {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}

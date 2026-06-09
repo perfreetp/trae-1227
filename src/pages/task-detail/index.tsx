@@ -1,19 +1,87 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Button } from '@tarojs/components';
 import Taro, { useRouter } from '@tarojs/taro';
 import { mockTasks } from '@/data/tasks';
+import { mockSettlements } from '@/data/orders';
 import { Task } from '@/types/task';
-import { statusMap, formatWeight, formatFee } from '@/utils';
+import { Settlement } from '@/types/settlement';
+import { statusMap, settlementStatusMap, formatWeight, formatFee } from '@/utils';
 import styles from './index.module.scss';
+
+const RECENT_VIEW_KEY = 'task_hall_recent_view_v1';
+
+interface OperationTrail {
+  key: string;
+  icon: string;
+  title: string;
+  time: string;
+  result?: string;
+  detail?: string;
+}
+
+const saveRecentView = (taskId: string, taskNo: string, taskTitle: string) => {
+  try {
+    const raw = Taro.getStorageSync(RECENT_VIEW_KEY);
+    let list: Array<{ id: string; taskNo: string; title: string; viewAt: string }> = [];
+    if (raw && Array.isArray(raw)) list = raw;
+    list = list.filter(x => x.id !== taskId);
+    list.unshift({
+      id: taskId,
+      taskNo,
+      title: taskTitle,
+      viewAt: new Date().toLocaleString('zh-CN', {
+        month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit'
+      }).replace(/\//g, '-')
+    });
+    Taro.setStorageSync(RECENT_VIEW_KEY, list.slice(0, 5));
+  } catch (_) {}
+};
 
 const TaskDetailPage: React.FC = () => {
   const router = useRouter();
-  const taskId = router.params.id || '1';
-  const task = useMemo<Task>(() => {
-    return mockTasks.find(t => t.id === taskId) || mockTasks[0];
-  }, [taskId]);
+  const paramId = router.params.id;
+  const paramTaskNo = router.params.taskNo;
+
+  const task = useMemo<Task | null>(() => {
+    if (paramId) {
+      const found = mockTasks.find(t => t.id === paramId);
+      if (found) return found;
+    }
+    if (paramTaskNo) {
+      const found = mockTasks.find(t => t.taskNo === paramTaskNo);
+      if (found) return found;
+    }
+    return mockTasks[0] || null;
+  }, [paramId, paramTaskNo]);
+
+  useEffect(() => {
+    if (task) {
+      saveRecentView(
+        task.id,
+        task.taskNo,
+        `${task.pickupAddress.slice(0, 8)}→${task.deliveryAddress.slice(0, 8)}`
+      );
+    }
+  }, [task?.id]);
+
+  if (!task) {
+    return (
+      <View className={styles.page}>
+        <View style={{ padding: '100rpx 32rpx', textAlign: 'center' }}>
+          <Text style={{ fontSize: '48rpx', marginBottom: '24rpx' }}>📦</Text>
+          <Text style={{ color: '#86909C' }}>未找到对应运单</Text>
+        </View>
+      </View>
+    );
+  }
 
   const statusConfig = statusMap[task.status];
+
+  const linkedSettlement = useMemo<Settlement | undefined>(() => {
+    return mockSettlements.find(
+      s => s.taskId === task.id || s.taskNo === task.taskNo
+    );
+  }, [task.id, task.taskNo]);
 
   const timelineSteps = [
     { key: 'publish', label: '运单发布', icon: '📢', time: task.publishTime },
@@ -44,6 +112,104 @@ const TaskDetailPage: React.FC = () => {
     if (stepIdx === currentIdx) return 'active';
     return 'todo';
   };
+
+  const operationTrail = useMemo<OperationTrail[]>(() => {
+    const trails: OperationTrail[] = [];
+    trails.push({
+      key: 'loading-reg',
+      icon: '📝',
+      title: '装车登记',
+      time: task.loadingTime || '--',
+      result: task.loadingTime ? '已完成' : '待操作',
+      detail: task.bundleCount
+        ? `竹捆 ${task.bundleCount} 捆 · ${formatWeight(task.estimatedWeight)}`
+        : '待录入装车信息'
+    });
+    if (task.bambooPhotos && task.bambooPhotos.length > 0) {
+      trails.push({
+        key: 'bamboo-photo',
+        icon: '📸',
+        title: '竹子拍照',
+        time: task.loadingTime || task.acceptTime || '--',
+        result: '已上传',
+        detail: `已上传 ${task.bambooPhotos.length} 张竹子照片`
+      });
+    }
+    if (task.weightReceiptPhoto) {
+      trails.push({
+        key: 'weight-receipt',
+        icon: '🧾',
+        title: '过磅单上传',
+        time: task.arrivalTime || task.departureTime || '--',
+        result: '已上传',
+        detail: `实际重量 ${formatWeight(task.actualWeight || task.estimatedWeight)}`
+      });
+    } else if (task.actualWeight) {
+      trails.push({
+        key: 'weight-confirm',
+        icon: '⚖️',
+        title: '过磅确认',
+        time: task.departureTime || '--',
+        result: '已确认',
+        detail: `实际重量 ${formatWeight(task.actualWeight)}`
+      });
+    }
+    if (task.exceptionReport) {
+      trails.push({
+        key: 'exception',
+        icon: '⚠️',
+        title: '异常上报',
+        time: task.departureTime || task.loadingTime || '--',
+        result: '已处理',
+        detail: task.exceptionReport
+      });
+    }
+    if (task.status === 'arrived' || task.arrivalTime) {
+      trails.push({
+        key: 'handover',
+        icon: '📱',
+        title: '扫码交接',
+        time: task.arrivalTime || '--',
+        result: task.status === 'completed' ? '已完成交接' : '待扫码确认',
+        detail: task.status === 'completed' ? '收购点已确认收货' : '请出示运单二维码扫描'
+      });
+    }
+    if (linkedSettlement) {
+      const sConfig = settlementStatusMap[linkedSettlement.status];
+      trails.push({
+        key: 'settlement',
+        icon: '💰',
+        title: '结算申请',
+        time: linkedSettlement.applyTime,
+        result: sConfig.text,
+        detail: `${linkedSettlement.settlementNo} · ${formatFee(linkedSettlement.totalFee)}${
+          linkedSettlement.status === 'paid' && linkedSettlement.payTime
+            ? ` · 到账时间 ${linkedSettlement.payTime}`
+            : ''
+        }`
+      });
+    } else if (task.status === 'completed' || task.status === 'arrived') {
+      trails.push({
+        key: 'settlement-pending',
+        icon: '💰',
+        title: '结算申请',
+        time: '--',
+        result: '待申请',
+        detail: `${task.status === 'completed' ? '运输已完成' : '已到达收购点'}，可以申请结算`
+      });
+    }
+    if (task.rating || task.ratingComment) {
+      trails.push({
+        key: 'rating',
+        icon: '⭐',
+        title: '客户评价',
+        time: task.completeTime || '--',
+        result: `${task.rating || 5}.0 星`,
+        detail: task.ratingComment || '用户已提交评价'
+      });
+    }
+    return trails;
+  }, [task, linkedSettlement]);
 
   const handleAccept = () => {
     Taro.showModal({
@@ -80,6 +246,14 @@ const TaskDetailPage: React.FC = () => {
 
   const handleHandover = () => {
     Taro.navigateTo({ url: `/pages/handover/index?id=${task.id}` });
+  };
+
+  const handleGoSettlement = () => {
+    Taro.navigateTo({ url: `/pages/settlement/index?taskId=${task.id}` });
+  };
+
+  const handleGoRating = () => {
+    Taro.navigateTo({ url: `/pages/rating/index?taskId=${task.id}` });
   };
 
   const renderActionButtons = () => {
@@ -129,6 +303,29 @@ const TaskDetailPage: React.FC = () => {
             </Button>
           </>
         );
+      case 'completed':
+        return (
+          <>
+            {!linkedSettlement ? (
+              <Button className={styles.btnGhost} onClick={handleGoSettlement}>
+                <Text className={styles.btnGhostText}>💰 申请结算</Text>
+              </Button>
+            ) : (
+              <Button className={styles.btnGhost} onClick={handleGoSettlement}>
+                <Text className={styles.btnGhostText}>💳 查看结算</Text>
+              </Button>
+            )}
+            {!task.rating ? (
+              <Button className={styles.btnPrimary} onClick={handleGoRating}>
+                <Text className={styles.btnPrimaryText}>⭐ 评价合作方</Text>
+              </Button>
+            ) : (
+              <Button className={styles.btnPrimary} onClick={() => Taro.switchTab({ url: '/pages/task-hall/index' })}>
+                <Text className={styles.btnPrimaryText}>🎋 返回大厅</Text>
+              </Button>
+            )}
+          </>
+        );
       default:
         return (
           <>
@@ -162,9 +359,53 @@ const TaskDetailPage: React.FC = () => {
           {task.status === 'loading' && '正在装车，请拍照记录竹捆数量和过磅重量'}
           {task.status === 'transporting' && '正在运输途中，请安全驾驶，注意查看路况和限高限宽'}
           {task.status === 'arrived' && '已到达收购点，请扫码确认并完成交接'}
-          {task.status === 'completed' && `运输已完成，运费¥${task.actualFee || task.estimatedFee}，感谢您的服务`}
+          {task.status === 'completed' && `运输已完成，运费${formatFee(task.actualFee || task.estimatedFee)}，感谢您的服务`}
         </Text>
       </View>
+
+      {linkedSettlement && (
+        <View
+          className={styles.infoCard}
+          style={{
+            borderLeft: `6rpx solid ${settlementStatusMap[linkedSettlement.status].color}`,
+            background: `${settlementStatusMap[linkedSettlement.status].bgColor}50`
+          }}
+        >
+          <Text className={styles.cardTitle}>
+            <Text className={styles.cardTitleIcon}>💳</Text>
+            结算状态 · {settlementStatusMap[linkedSettlement.status].text}
+          </Text>
+          <View className={styles.infoRow}>
+            <Text className={styles.infoLabel}>结算单号</Text>
+            <Text
+              className={styles.infoValue}
+              style={{ color: settlementStatusMap[linkedSettlement.status].color, fontWeight: 600 }}
+            >
+              {linkedSettlement.settlementNo}
+            </Text>
+          </View>
+          <View className={styles.infoRow}>
+            <Text className={styles.infoLabel}>结算金额</Text>
+            <Text className={styles.infoValue}>
+              {formatFee(linkedSettlement.totalFee)}
+              {linkedSettlement.status === 'paid' && linkedSettlement.payTime
+                ? ` · 已到账 ${linkedSettlement.payTime}`
+                : linkedSettlement.status === 'approved'
+                  ? ' · 待平台打款'
+                  : linkedSettlement.status === 'pending'
+                    ? ' · 平台审核中'
+                    : ''}
+            </Text>
+          </View>
+          <Button
+            className={styles.btnPrimary}
+            style={{ marginTop: '20rpx', height: '72rpx', boxShadow: 'none' }}
+            onClick={handleGoSettlement}
+          >
+            <Text className={styles.btnPrimaryText}>查看完整结算单 →</Text>
+          </Button>
+        </View>
+      )}
 
       <View className={styles.timelineCard}>
         <Text className={styles.cardTitle}>
@@ -198,6 +439,55 @@ const TaskDetailPage: React.FC = () => {
         </View>
       </View>
 
+      <View className={styles.timelineCard}>
+        <Text className={styles.cardTitle}>
+          <Text className={styles.cardTitleIcon}>📜</Text>
+          操作轨迹
+        </Text>
+        <View className={styles.timelineList}>
+          {operationTrail.map((trail, idx) => (
+            <View
+              key={trail.key}
+              className={`${styles.timelineItem} ${
+                idx === operationTrail.length - 1
+                  ? styles.timelineItemActive
+                  : styles.timelineItemDone
+              }`}
+            >
+              <View className={styles.timelineLine} />
+              <View className={styles.timelineDot}>
+                <Text>{trail.icon}</Text>
+              </View>
+              <View className={styles.timelineContent}>
+                <View style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text className={styles.timelineTitle}>{trail.title}</Text>
+                  <Text style={{
+                    fontSize: '22rpx',
+                    color: idx === operationTrail.length - 1 ? '#2E7D32' : '#4E5969',
+                    fontWeight: 600,
+                    flexShrink: 0,
+                    marginLeft: '16rpx'
+                  }}>
+                    {trail.result}
+                  </Text>
+                </View>
+                <Text className={styles.timelineTime}>{trail.time}</Text>
+                {trail.detail && (
+                  <Text style={{
+                    fontSize: '24rpx',
+                    color: '#86909C',
+                    marginTop: '8rpx',
+                    lineHeight: 1.5
+                  }}>
+                    {trail.detail}
+                  </Text>
+                )}
+              </View>
+            </View>
+          ))}
+        </View>
+      </View>
+
       <View className={styles.feeCard}>
         <View className={styles.feeRow}>
           <Text className={styles.feeLabel}>预估重量</Text>
@@ -214,7 +504,9 @@ const TaskDetailPage: React.FC = () => {
           <Text className={styles.feeValue}>¥{task.unitPrice}/吨</Text>
         </View>
         <View className={styles.feeRow}>
-          <Text className={styles.feeLabel}>预估运费</Text>
+          <Text className={styles.feeLabel}>
+            {task.status === 'completed' ? '实际运费' : '预估运费'}
+          </Text>
           <Text className={styles.feeTotal}>{formatFee(task.actualFee || task.estimatedFee)}</Text>
         </View>
       </View>
@@ -238,7 +530,7 @@ const TaskDetailPage: React.FC = () => {
           <View className={styles.routePoint}>
             <View className={`${styles.routeIcon} ${styles.routeIconEnd}`}>终</View>
             <View className={styles.routeContent}>
-              <Text className={styles.routeLabel}>收货点 · 预计到达</Text>
+              <Text className={styles.routeLabel}>收货点 · 到达时间</Text>
               <Text className={styles.routeAddr}>{task.deliveryAddress}</Text>
               <Text className={styles.routeLabel} style={{ marginTop: 8 }}>
                 {task.arrivalTime || '预计发车后1.5小时'}
@@ -297,30 +589,6 @@ const TaskDetailPage: React.FC = () => {
           </View>
         )}
       </View>
-
-      {task.exceptionReport && (
-        <View className={styles.infoCard} style={{ borderLeft: '6rpx solid #F53F3F' }}>
-          <Text className={styles.cardTitle}>
-            <Text className={styles.cardTitleIcon}>⚠️</Text>
-            异常上报
-          </Text>
-          <Text style={{ fontSize: '28rpx', color: '#4E5969', lineHeight: 1.6 }}>
-            {task.exceptionReport}
-          </Text>
-        </View>
-      )}
-
-      {task.ratingComment && (
-        <View className={styles.infoCard} style={{ borderLeft: '6rpx solid #ED6C02' }}>
-          <Text className={styles.cardTitle}>
-            <Text className={styles.cardTitleIcon}>⭐</Text>
-            客户评价 · {task.rating}星
-          </Text>
-          <Text style={{ fontSize: '28rpx', color: '#4E5969', lineHeight: 1.6 }}>
-            {task.ratingComment}
-          </Text>
-        </View>
-      )}
 
       <View className={styles.bottomBar}>
         {renderActionButtons()}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Button, Input, Textarea } from '@tarojs/components';
 import Taro, { useRouter, usePullDownRefresh } from '@tarojs/taro';
 import { mockSettlements } from '@/data/orders';
@@ -19,18 +19,45 @@ const calculateFee = (weightKg: number, pricePerTon: number): number => {
   return weightTon * pricePerTon;
 };
 
+const SETTLE_FILTER_KEY = 'settlement_filter_v1';
+
+interface SettleSavedFilter {
+  filterStatus: SettlementStatus | 'all';
+  filterMonth: string;
+  filterPlate: string;
+}
+
+const loadSettleFilter = (): SettleSavedFilter | null => {
+  try {
+    const saved = Taro.getStorageSync(SETTLE_FILTER_KEY);
+    if (saved && typeof saved === 'object') return saved;
+  } catch (_) {}
+  return null;
+};
+
+const saveSettleFilter = (f: SettleSavedFilter) => {
+  try {
+    Taro.setStorageSync(SETTLE_FILTER_KEY, f);
+  } catch (_) {}
+};
+
 const SettlementPage: React.FC = () => {
   const router = useRouter();
   const taskIdFromRouter = router.params.taskId;
+  const saved = loadSettleFilter();
   const [activeTab, setActiveTab] = useState<TabType>(taskIdFromRouter ? 'apply' : 'list');
-  const [filterStatus, setFilterStatus] = useState<SettlementStatus | 'all'>('all');
-  const [filterMonth, setFilterMonth] = useState<string>('all');
-  const [filterPlate, setFilterPlate] = useState<string>('');
+  const [filterStatus, setFilterStatus] = useState<SettlementStatus | 'all'>(saved?.filterStatus || 'all');
+  const [filterMonth, setFilterMonth] = useState<string>(saved?.filterMonth || 'all');
+  const [filterPlate, setFilterPlate] = useState<string>(saved?.filterPlate || '');
   const [settlements, setSettlements] = useState<Settlement[]>(mockSettlements);
   const [selectedTaskId, setSelectedTaskId] = useState<string>(taskIdFromRouter || '');
   const [actualWeight, setActualWeight] = useState<string>('');
   const [unitPrice, setUnitPrice] = useState<string>('82');
   const [remarks, setRemarks] = useState<string>('');
+
+  useEffect(() => {
+    saveSettleFilter({ filterStatus, filterMonth, filterPlate });
+  }, [filterStatus, filterMonth, filterPlate]);
 
   usePullDownRefresh(() => {
     setTimeout(() => {
@@ -82,13 +109,22 @@ const SettlementPage: React.FC = () => {
     const pending = list.filter(s => s.status === 'pending').length;
     const approved = list.filter(s => s.status === 'approved').length;
     const paid = list.filter(s => s.status === 'paid').length;
-    const totalPending = list
-      .filter(s => s.status === 'pending' || s.status === 'approved')
+    const rejected = list.filter(s => s.status === 'rejected').length;
+    const pendingAmount = list
+      .filter(s => s.status === 'pending')
       .reduce((sum, s) => sum + s.totalFee, 0);
-    const totalPaid = list
+    const approvedAmount = list
+      .filter(s => s.status === 'approved')
+      .reduce((sum, s) => sum + s.totalFee, 0);
+    const paidAmount = list
       .filter(s => s.status === 'paid')
       .reduce((sum, s) => sum + s.totalFee, 0);
-    return { pending, approved, paid, totalPending, totalPaid };
+    return {
+      pending, approved, paid, rejected,
+      pendingAmount, approvedAmount, paidAmount,
+      totalPending: pendingAmount + approvedAmount,
+      totalPaid: paidAmount
+    };
   }, [filteredSettlements]);
 
   const handleMonthSelect = () => {
@@ -130,7 +166,18 @@ const SettlementPage: React.FC = () => {
     setFilterStatus('all');
     setFilterMonth('all');
     setFilterPlate('');
+    try { Taro.removeStorageSync(SETTLE_FILTER_KEY); } catch (_) {}
     Taro.showToast({ title: '已重置筛选', icon: 'success' });
+  };
+
+  const handleGoTaskDetail = (item: Settlement) => {
+    if (item.taskId) {
+      Taro.navigateTo({ url: `/pages/task-detail/index?id=${item.taskId}` });
+    } else if (item.taskNo) {
+      Taro.navigateTo({ url: `/pages/task-detail/index?taskNo=${item.taskNo}` });
+    } else {
+      Taro.showToast({ title: '运单信息暂不可用', icon: 'none' });
+    }
   };
 
   const estimatedFee = useMemo(() => {
@@ -246,13 +293,19 @@ const SettlementPage: React.FC = () => {
           <View className={styles.summaryDetailItem}>
             <Text className={styles.summaryDetailLabel}>⏳ 待审核金额</Text>
             <Text className={`${styles.summaryDetailValue} ${styles.summaryDetailPending}`}>
-              {formatFee(stats.totalPending)}
+              {formatFee(stats.pendingAmount)}
+            </Text>
+          </View>
+          <View className={styles.summaryDetailItem}>
+            <Text className={styles.summaryDetailLabel}>📋 已审核待打款</Text>
+            <Text className={styles.summaryDetailValue} style={{ color: '#90CAF9' }}>
+              {formatFee(stats.approvedAmount)}
             </Text>
           </View>
           <View className={styles.summaryDetailItem}>
             <Text className={styles.summaryDetailLabel}>✅ 已到账金额</Text>
             <Text className={`${styles.summaryDetailValue} ${styles.summaryDetailPaid}`}>
-              {formatFee(stats.totalPaid)}
+              {formatFee(stats.paidAmount)}
             </Text>
           </View>
         </View>
@@ -390,14 +443,12 @@ const SettlementPage: React.FC = () => {
                     <Text className={styles.infoValue}>{item.applyTime}</Text>
                   </View>
                   <View className={styles.cardActions}>
-                    <Button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => handleViewDetail(item)}>
-                      查看详情
+                    <Button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => handleGoTaskDetail(item)}>
+                      📦 查看运单
                     </Button>
-                    {(item.status === 'paid') && (
-                      <Button className={`${styles.actionBtn} ${styles.primaryBtn}`}>
-                        查看详情
-                      </Button>
-                    )}
+                    <Button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={() => handleViewDetail(item)}>
+                      💳 结算详情
+                    </Button>
                   </View>
                 </View>
               );

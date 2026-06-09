@@ -16,11 +16,6 @@ const getOrderTime = (order: Task): string => {
 
 const getOrderTimeLabel = (order: Task): string => {
   if (order.status === 'completed') return '完成于';
-  if (order.status === 'arrived') return '到达于';
-  if (order.status === 'transporting') return '运输中 · 发布于';
-  if (order.status === 'loading') return '装车中 · 发布于';
-  if (order.status === 'accepted') return '已接单 · 发布于';
-  if (order.status === 'cancelled') return '已取消 · 发布于';
   return '发布于';
 };
 

@@ -45,16 +45,33 @@ const clearSavedFilter = () => {
   } catch (_) {}
 };
 
+interface RecentView {
+  id: string;
+  taskNo: string;
+  title: string;
+  viewAt: string;
+}
+
 const TaskHallPage: React.FC = () => {
   const saved = loadSavedFilter();
   const [activeFilter, setActiveFilter] = useState<string>(saved?.activeFilter || 'all');
   const [searchKeyword, setSearchKeyword] = useState<string>(saved?.searchKeyword || '');
   const [plateFilter, setPlateFilter] = useState<string>(saved?.plateFilter || '');
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [recentList, setRecentList] = useState<RecentView[]>([]);
 
   useEffect(() => {
     saveFilter({ activeFilter, searchKeyword, plateFilter });
   }, [activeFilter, searchKeyword, plateFilter]);
+
+  useDidShow(() => {
+    try {
+      const raw = Taro.getStorageSync('task_hall_recent_view_v1');
+      if (raw && Array.isArray(raw)) {
+        setRecentList(raw);
+      }
+    } catch (_) {}
+  });
 
   usePullDownRefresh(() => {
     setIsRefreshing(true);
@@ -132,6 +149,26 @@ const TaskHallPage: React.FC = () => {
     setPlateFilter('');
     clearSavedFilter();
     Taro.showToast({ title: '已重置所有筛选', icon: 'success' });
+  };
+
+  const handleRecentClick = (id: string) => {
+    Taro.navigateTo({ url: `/pages/task-detail/index?id=${id}` });
+  };
+
+  const handleClearRecent = () => {
+    Taro.showModal({
+      title: '确认清空',
+      content: '确定清空最近查看的运单记录？',
+      success: (res) => {
+        if (res.confirm) {
+          try {
+            Taro.removeStorageSync('task_hall_recent_view_v1');
+          } catch (_) {}
+          setRecentList([]);
+          Taro.showToast({ title: '已清空最近记录', icon: 'success' });
+        }
+      }
+    });
   };
 
   return (
@@ -227,6 +264,35 @@ const TaskHallPage: React.FC = () => {
             <Text className={styles.statLabel}>已完成</Text>
           </View>
         </View>
+
+        {recentList.length > 0 && (
+          <View className={styles.recentCard}>
+            <View className={styles.recentHeader}>
+              <View className={styles.recentTitle}>🕐 最近查看</View>
+              <Text className={styles.recentClear} onClick={handleClearRecent}>
+                清空
+              </Text>
+            </View>
+            <View className={styles.recentList}>
+              {recentList.map(item => (
+                <View
+                  key={item.id}
+                  className={styles.recentItem}
+                  onClick={() => handleRecentClick(item.id)}
+                >
+                  <View className={styles.recentItemLeft}>
+                    <Text className={styles.recentItemNo}>{item.taskNo}</Text>
+                    <Text className={styles.recentItemRoute}>{item.title}</Text>
+                  </View>
+                  <View className={styles.recentItemMeta}>
+                    <Text className={styles.recentItemTime}>{item.viewAt}</Text>
+                    <Text className={styles.recentItemGo}>查看 →</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         <View className={styles.sectionHeader}>
           <View className={styles.sectionTitle}>
